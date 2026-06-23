@@ -408,7 +408,6 @@ http://localhost:3002/docs
 ---
 
 # Screenshots
-<img width="941" height="416" alt="Dashboard" src="https://github.com/user-attachments/assets/214a1e01-2eaf-448d-a691-4598320a6f75" />
 
 The platform includes:
 
@@ -420,7 +419,12 @@ The platform includes:
 * Reports Center
 * AI Forecasting Dashboard
 
-(Add screenshots here)
+<img width="941" height="416" alt="Dashboard" src="https://github.com/user-attachments/assets/214a1e01-2eaf-448d-a691-4598320a6f75" />
+<img width="950" height="409" alt="notifications" src="https://github.com/user-attachments/assets/bf7b2c25-6360-4ab0-b539-46dae6244a6e" />
+<img width="943" height="419" alt="Hr dashboard" src="https://github.com/user-attachments/assets/6a87b8aa-f621-4df2-a390-7ed2dfc624cb" />
+<img width="946" height="415" alt="ai forecasting1" src="https://github.com/user-attachments/assets/5094b278-ef04-4f7b-b561-45c8bd59ac80" />
+<img width="950" height="416" alt="user management" src="https://github.com/user-attachments/assets/c049d42e-e466-4c4f-844a-21de187aa8ba" />
+
 
 ---
 
