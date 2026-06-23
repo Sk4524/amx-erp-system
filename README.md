@@ -408,6 +408,7 @@ http://localhost:3002/docs
 ---
 
 # Screenshots
+<img width="941" height="416" alt="Dashboard" src="https://github.com/user-attachments/assets/214a1e01-2eaf-448d-a691-4598320a6f75" />
 
 The platform includes:
 
