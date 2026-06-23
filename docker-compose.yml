@@ -1,0 +1,79 @@
+version: "3.9"
+
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: amx-postgres
+
+    restart: always
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: amx_erp
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+
+    container_name: amx-redis
+
+    restart: always
+
+    ports:
+      - "6379:6379"
+
+  api:
+    build:
+      context: ./apps/api
+
+    container_name: amx-api
+
+    restart: always
+
+    depends_on:
+      - postgres
+      - redis
+
+    ports:
+      - "3002:3002"
+
+    env_file:
+      - ./apps/api/.env.docker
+
+  ml-services:
+    build:
+      context: ./apps/ml-services
+
+    container_name: amx-ml
+
+    restart: always
+
+    ports:
+      - "8000:8000"
+
+  web:
+    build:
+      context: ./apps/web
+
+    container_name: amx-web
+
+    restart: always
+
+    depends_on:
+      - api
+    
+    env_file:
+    - ./apps/web/.env.docker
+
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres_data:

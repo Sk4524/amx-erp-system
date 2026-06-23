@@ -1,0 +1,15 @@
+{
+  "name": "amx-erp",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace=web\" \"npm run start:dev --workspace=api\"",
+    "build": "npm run build --workspaces"
+  },
+  "dependencies": {
+    "prophet": "^0.1.1"
+  }
+}

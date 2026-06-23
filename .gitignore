@@ -1,0 +1,44 @@
+# dependencies
+node_modules
+
+# nextjs
+.next
+
+# build
+dist
+
+# env files
+.env
+.env.local
+
+# logs
+logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# uploads
+uploads
+
+# prisma
+prisma/dev.db
+
+
+node_modules
+.next
+dist
+coverage
+.env
+.env.*
+*.log
+
+api/node_modules
+api/dist
+
+web/node_modules
+web/.next
+
+.vscode
+.DS_Store

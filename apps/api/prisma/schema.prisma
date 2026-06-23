@@ -1,0 +1,500 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  users        User[]
+  employees    Employee[]
+  accounts     Account[]
+  transactions Transaction[]
+  inventory    Inventory[]
+  reports       Report[]
+   reportHistories ReportHistory[]
+  invoices Invoice[]
+
+  ledgers        Ledger[]
+  payables       Payable[]
+  receivables    Receivable[]
+  attendances    Attendance[]
+  leaves         Leave[]
+  purchaseOrders PurchaseOrder[]
+  stockMovements StockMovement[]
+  customers      Customer[]
+  salesOrders    SalesOrder[]
+  vendors        Vendor[]
+  
+
+  notifications Notification[]
+  
+  auditLogs AuditLog[]
+
+  dashboardWidgets DashboardWidget[]
+
+  projects Project[]
+  tasks    Task[]
+}
+
+model User {
+  id       String @id @default(uuid())
+  email    String @unique
+  password String
+  role     Role
+
+  name     String?
+
+  phone    String?
+
+  avatar   String?
+
+  isActive Boolean @default(true)
+  
+lastLogin DateTime?
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+model Employee {
+  id       String @id @default(uuid())
+  name     String
+  position String
+  salary   Float
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  transactions Transaction[]
+  attendances  Attendance[]
+  leaves       Leave[]
+}
+
+model Attendance {
+  id String @id @default(uuid())
+
+  date DateTime
+
+  status String
+
+  employeeId String
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  tenantId String
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Leave {
+  id String @id @default(uuid())
+
+  reason String
+
+  startDate DateTime
+
+  endDate DateTime
+
+  status String @default("PENDING")
+
+  employeeId String
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  tenantId String
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Account {
+  id      String @id @default(uuid())
+  name    String
+  type    String
+  balance Float  @default(0)
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  transactions Transaction[]
+  ledgers      Ledger[]
+}
+
+model Transaction {
+  id String @id @default(uuid())
+
+  amount Float
+  type   String
+
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id])
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  employeeId String?
+  employee   Employee? @relation(fields: [employeeId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  ledger Ledger?
+}
+
+model Ledger {
+  id String @id @default(uuid())
+
+  description String
+  debit       Float
+  credit      Float
+
+  reference String?
+
+  transactionId String      @unique
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id])
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Payable {
+  id String @id @default(uuid())
+
+  vendorName String
+  amount     Float
+  dueDate    DateTime
+  status     String   @default("PENDING")
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Receivable {
+  id String @id @default(uuid())
+
+  customerName String
+  amount       Float
+  dueDate      DateTime
+  status       String   @default("PENDING")
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Inventory {
+  id String @id @default(uuid())
+
+  productName String
+  sku         String
+  quantity    Int
+  price       Float
+  category    String
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model PurchaseOrder {
+  id String @id @default(uuid())
+
+  vendorName String
+
+  productName String
+
+  quantity Int
+
+  price Float
+
+  status String @default("PENDING")
+
+  tenantId String
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model StockMovement {
+  id String @id @default(uuid())
+
+  type String
+
+  productName String
+
+  quantity Int
+
+  reference String?
+
+  tenantId String
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Customer {
+  id String @id @default(uuid())
+
+  name String
+
+  email String?
+
+  phone String?
+
+  address String?
+
+  tenantId String
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  salesOrders SalesOrder[]
+
+  createdAt DateTime @default(now())
+}
+
+model SalesOrder {
+  id String @id @default(uuid())
+
+  customerId String
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  productName String
+
+  quantity Int
+
+  price Float
+
+  totalAmount Float
+
+  status String @default("COMPLETED")
+
+  tenantId String
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model DashboardWidget {
+
+  id          String   @id @default(uuid())
+
+  title       String
+
+  type        String
+
+  config      Json
+
+  position    Int
+
+  tenantId    String
+
+  tenant      Tenant @relation(fields: [tenantId], references: [id])
+
+  createdAt   DateTime @default(now())
+}
+
+model Notification {
+
+  id          String   @id @default(uuid())
+
+  title       String
+
+  message     String
+
+  type        String
+
+  isRead      Boolean  @default(false)
+
+  tenantId    String
+
+  tenant      Tenant @relation(fields: [tenantId], references: [id])
+
+  createdAt   DateTime @default(now())
+}
+
+model AuditLog {
+
+  id          String   @id @default(uuid())
+
+  action      String
+
+  module      String
+
+  description String
+
+  userEmail   String
+
+  tenantId    String
+
+  tenant      Tenant @relation(fields: [tenantId], references: [id])
+
+  createdAt   DateTime @default(now())
+}
+
+model Project {
+
+  id           String   @id @default(uuid())
+
+  name         String
+
+  description  String?
+
+  budget       Float    @default(0)
+
+  status       String   @default("ACTIVE")
+
+  tenantId     String
+
+  tenant       Tenant @relation(fields: [tenantId], references: [id])
+
+  tasks        Task[]
+
+  createdAt    DateTime @default(now())
+}
+
+model Task {
+
+  id           String   @id @default(uuid())
+
+  title        String
+
+  description  String?
+
+  status       String   @default("PENDING")
+
+  assignedTo   String?
+
+  deadline     DateTime?
+
+  projectId    String
+
+  project      Project @relation(fields: [projectId], references: [id])
+
+  tenantId     String
+
+  tenant       Tenant @relation(fields: [tenantId], references: [id])
+
+  createdAt    DateTime @default(now())
+}
+
+model Report {
+
+  id           String   @id @default(uuid())
+
+  name         String
+
+  type         String
+
+  frequency    String
+
+  status       String   @default("SCHEDULED")
+
+  email        String
+
+  lastRun      DateTime?
+
+  nextRun      DateTime?
+
+  tenantId     String
+
+  tenant       Tenant @relation(fields: [tenantId], references: [id])
+
+  createdAt    DateTime @default(now())
+}
+
+model Vendor {
+
+  id           String   @id @default(uuid())
+
+  name         String
+
+  email        String?
+
+  phone        String?
+
+  address      String?
+
+  company      String?
+
+  status       String   @default("ACTIVE")
+
+  tenantId     String
+
+  tenant  Tenant  @relation(fields: [tenantId],references: [id])
+
+  createdAt    DateTime @default(now())
+
+  
+}
+
+model ReportHistory {
+
+  id String @id @default(uuid())
+
+  reportName String
+
+  email String
+
+  status String
+
+  generatedAt DateTime @default(now())
+
+  tenantId String
+
+  tenant Tenant @relation(fields: [tenantId],references: [id])
+}
+
+model Invoice {
+
+  id String @id @default(uuid())
+
+  invoiceNumber String @unique
+
+  customerName String
+
+  amount Float
+
+  status String @default("PENDING")
+
+  dueDate DateTime
+
+  tenantId String
+
+  tenant Tenant@relation(fields: [tenantId],references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  HR
+  FINANCE
+  SALES
+  EMPLOYEE
+}
