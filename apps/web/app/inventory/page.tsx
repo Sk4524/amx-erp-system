@@ -98,14 +98,13 @@ export default function InventoryPage() {
 
       try {
 
-        const res =
-          await api.get(
-            `/inventory?search=${search}`
-          );
+        const res = await api.get(
+  `/inventory?search=${search}`
+);
 
-        setItems(
-          res.data.data || []
-        );
+setItems(
+  res.data.data.data || []
+);
 
       } catch (err: any) {
 
@@ -130,10 +129,9 @@ export default function InventoryPage() {
             "/inventory/purchase-orders"
           );
 
-        setPurchaseOrders(
-          res.data.data || []
-        );
-
+   setPurchaseOrders(
+  res.data.data.data || []
+);
       } catch (err: any) {
 
         console.error(err);
@@ -157,9 +155,9 @@ export default function InventoryPage() {
             "/inventory/stock-movements"
           );
 
-        setStockMovements(
-          res.data.data || []
-        );
+    setStockMovements(
+  res.data.data.data || []
+);
 
       } catch (err: any) {
 

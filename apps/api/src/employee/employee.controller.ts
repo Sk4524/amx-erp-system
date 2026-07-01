@@ -62,8 +62,12 @@ export class EmployeeController {
   ) {
     return this.service.getAll(
       req.user.tenantId,
-      Number(page) || 1,
-      Number(limit) || 10,
+      Math.max(Number(page) || 1, 1),
+
+Math.min(
+Math.max(Number(limit) || 10, 1),
+100
+),
       search || "",
     );
   }
@@ -84,7 +88,36 @@ export class EmployeeController {
       req.user.email,
     );
   }
+@Post("bulk")
+@Roles("ADMIN")
+createBulk(
+  @Body() body: CreateEmployeeDto[],
+  @Req() req: any,
+) {
+  return this.service.createBulk(
+    body,
+    req.user.tenantId,
+     req.user.email,
+  );
+}
 
+
+
+// GET SINGLE EMPLOYEE
+@Get(":id")
+@Roles("ADMIN", "HR", "MANAGER")
+@ApiOperation({
+  summary: "Get employee by id",
+})
+getOne(
+  @Param("id") id: string,
+  @Req() req: any,
+) {
+  return this.service.getOne(
+    id,
+    req.user.tenantId,
+  );
+}
   // DELETE EMPLOYEE
   @Delete(":id")
   @Roles("ADMIN")

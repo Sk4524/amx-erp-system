@@ -187,9 +187,16 @@ export default function DashboardPage() {
           try {
             const empRes =
               await api.get("/employee");
+            console.log("EMPLOYEE RESPONSE", empRes.data);
 
-            empData =
-              empRes.data.data.data || [];
+            const employeeData =
+              empRes.data.data?.data ??
+              empRes.data.data ??
+              [];
+
+            empData = Array.isArray(employeeData)
+              ? employeeData
+              : [];
 
           } catch (err) {
 
@@ -364,15 +371,13 @@ export default function DashboardPage() {
 
   // LOW STOCK ITEMS
   const lowStockItems =
-    inventory.filter(
-      (i: any) =>
-
-        Number(i.quantity) <=
-
-        Number(
-          i.reorderLevel || 5
-        )
-    );
+    Array.isArray(inventory)
+      ? inventory.filter(
+        (i: any) =>
+          Number(i.quantity) <=
+          Number(i.reorderLevel || 5)
+      )
+      : [];
 
   const aiCards =
     aiInsights?.data?.insights || [];
@@ -877,11 +882,7 @@ export default function DashboardPage() {
 
 
           {/* KPI CARDS */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 mb-10">
-
-
-
-
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-4 gap-6 mb-10">
 
             {kpiCards
               .filter(card =>
@@ -1920,7 +1921,7 @@ export default function DashboardPage() {
 
                       <div
                         key={index}
-                        className="border border-orange-200 bg-orange-50 rounded-3xl p-5 hover:shadow-lg transition-all"
+                        className="border border-blue-200 bg-blue-50 rounded-3xl p-5 hover:shadow-lg transition-all"
                       >
 
                         <div className="flex items-center justify-between mb-3">
@@ -1933,7 +1934,7 @@ export default function DashboardPage() {
 
                 ${item.urgency === "HIGH"
                               ? "bg-red-500 text-white"
-                              : "bg-orange-400 text-white"
+                              : "bg-blue-400 text-white"
                             }
               `}>
 
@@ -1945,33 +1946,39 @@ export default function DashboardPage() {
 
                         <div className="space-y-2 text-sm">
 
-                          <p>
+                          <div className="font-bold mt-4 text-gray-600">
                             Current Stock:
-                            <span className="font-bold ml-2">
+                            <span className="font-bold ml-2 text-blue-400">
                               {item.currentStock}
                             </span>
-                          </p>
+                          </div>
 
-                          <p>
-                            Sold Units:
-                            <span className="font-bold ml-2">
-                              {item.soldUnits}
-                            </span>
-                          </p>
+                            <div className="font-bold mt-4 text-gray-600">
+                              Sold Units:
+                              <span className="font-bold ml-2 text-blue-400">
+                                {item.soldUnits}
+                              </span>
+                            </div>
 
-                          <p>
-                            Avg Demand:
-                            <span className="font-bold ml-2">
-                              {item.averageDemand}
-                            </span>
-                          </p>
+                          
+                            <div className="font-bold mt-4 text-gray-600">
+                              Avg Demand:
+                              <span className="font-bold ml-2 text-blue-400">
+                                {item.averageDemand}
+                              </span>
+                            </div>
+                          
 
-                          <p>
-                            Recommended Restock:
-                            <span className="font-bold ml-2 text-orange-600">
-                              {item.recommendedRestock}
-                            </span>
-                          </p>
+                          
+                            <div className="font-bold mt-4 text-gray-600">
+
+                              Recommended Restock:
+
+                              <span className="font-bold ml-2 text-blue-600">
+                                {item.recommendedRestock}
+                              </span>
+                            </div>
+                          
 
                         </div>
 
@@ -2099,7 +2106,7 @@ export default function DashboardPage() {
 
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-5">
 
                   {smartNotifications.map(
                     (item: any, index: number) => (
@@ -2390,37 +2397,43 @@ export default function DashboardPage() {
 
                       ) : (
 
-                        employees.map((emp: any) => (
+                        Array.isArray(employees) ? (
 
-                          <div
-                            key={emp.id}
-                            className="flex items-center justify-between border border-gray-100 rounded-2xl px-4 py-3.5 hover:bg-gray-50 hover:shadow-md transition-all duration-300"
-                          >
+                          employees.map((emp: any) => (
 
-                            <div>
+                            <div
+                              key={emp.id}
+                              className="flex items-center justify-between border border-gray-100 rounded-2xl px-4 py-3.5 hover:bg-gray-50 hover:shadow-md transition-all duration-300"
+                            >
 
-                              <p className="font-semibold text-[#111827]">
-                                {emp.name}
-                              </p>
+                              <div>
 
-                              <p className="text-sm text-gray-500 mt-1">
-                                {emp.position}
-                              </p>
+                                <p className="font-semibold text-[#111827]">
+                                  {emp.name}
+                                </p>
+
+                                <p className="text-sm text-gray-500 mt-1">
+                                  {emp.position}
+                                </p>
+
+                              </div>
+
+                              <div className="text-right">
+
+                                <p className="font-bold text-green-600 text-lg">
+                                  ₹{emp.salary}
+                                </p>
+
+                              </div>
 
                             </div>
 
-                            <div className="text-right">
+                          ))
 
-                              <p className="font-bold text-green-600 text-lg">
-                                ₹{emp.salary}
-                              </p>
+                        ) : null
 
-                            </div>
-
-                          </div>
-
-                        ))
                       )}
+
 
                     </div>
 

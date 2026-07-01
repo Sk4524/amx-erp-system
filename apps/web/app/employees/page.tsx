@@ -46,11 +46,11 @@ export default function EmployeesPage() {
 
       setLoading(true);
 
-      const res = await api.get(
-        `/employee?search=${encodeURIComponent(
-          debouncedSearch
-        )}`
-      );
+     const res = await api.get(
+  `/employee?page=1&limit=1000&search=${encodeURIComponent(
+    debouncedSearch
+  )}`
+);
 
       setEmployees(
         Array.isArray(

@@ -6,6 +6,9 @@ import {
 
 import { PrismaService } from "../prisma/prisma.service";
 
+import { CreateInventoryDto } from "./dto/create-inventory.dto";
+import { UpdateInventoryDto } from "./dto/update-inventory.dto";
+
 import { EventEmitter2 }
 from "@nestjs/event-emitter";
 
@@ -47,23 +50,64 @@ constructor(
     search = ""
   ) {
 
-    return this.prisma.inventory.findMany({
+    const items =
+  await this.prisma.inventory.findMany({
 
-      where: {
+    where: {
 
-        tenantId,
+      tenantId,
 
-        productName: {
-          contains: search,
-          mode: "insensitive",
-        },
+      productName: {
+        contains: search,
+        mode: "insensitive",
       },
+    },
 
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+return {
+
+  success: true,
+
+  data: items,
+
+};
   }
+  async getOne(
+id:string,
+tenantId:string,
+){
+
+const item=
+await this.prisma.inventory.findFirst({
+
+where:{
+id,
+tenantId,
+},
+
+});
+
+if(!item){
+
+throw new NotFoundException(
+"Inventory item not found",
+);
+
+}
+
+return{
+
+success:true,
+
+data:item,
+
+};
+
+}
 
 // CREATE
 async create(
@@ -192,9 +236,42 @@ tenantId
     tenantId,
   });
 
-  return item;
-}
+  return {
 
+success:true,
+
+message:"Inventory item created",
+
+data:item,
+
+};
+}
+async createBulk(
+  data: CreateInventoryDto[],
+  tenantId: string,
+) {
+ const result =
+  await this.prisma.inventory.createMany({
+
+    data: data.map(item => ({
+
+      ...item,
+
+      tenantId,
+
+    })),
+  });
+
+return {
+
+  success: true,
+
+  message: "Inventory imported successfully",
+
+  data: result,
+
+};
+}
 
   // DELETE INVENTORY
 async delete(
@@ -269,14 +346,22 @@ await this.auditService.createLog({
   tenantId,
 });
 
-return item;
+return {
+
+success:true,
+
+message:"Inventory deleted",
+
+data:item,
+
+};
 }
 
 
   // UPDATE INVENTORY
 async update(
   id: string,
-  data: any,
+  data: UpdateInventoryDto,
   tenantId: string,
   userEmail: string
 ){
@@ -386,7 +471,15 @@ await this.auditService.createLog({
   tenantId,
 });
 
-return item;
+return {
+
+success:true,
+
+message:"Inventory updated",
+
+data:item,
+
+};
 }
   // CREATE PURCHASE ORDER
  async createPurchaseOrder(
@@ -446,7 +539,15 @@ await this.auditService.createLog({
   tenantId,
 });
 
-return po;
+return{
+
+success:true,
+
+message:"Purchase order created",
+
+data:po,
+
+};
   }
 
   // GET PURCHASE ORDERS
@@ -454,16 +555,25 @@ return po;
     tenantId: string
   ) {
 
-    return this.prisma.purchaseOrder.findMany({
+   const orders =
+  await this.prisma.purchaseOrder.findMany({
 
-      where: {
-        tenantId,
-      },
+    where: {
+      tenantId,
+    },
 
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+return {
+
+  success: true,
+
+  data: orders,
+
+};
   }
 
 // COMPLETE PURCHASE ORDER
@@ -617,20 +727,38 @@ await this.auditService.createLog({
     order.tenantId,
 });
 
-return completedOrder;
+return{
+
+success:true,
+
+message:"Purchase order completed",
+
+data:completedOrder,
+
+};
 }
 // GET STOCK MOVEMENTS
 async getStockMovements(
   tenantId: string
 ) {
-  return this.prisma.stockMovement.findMany({
+  const movements =
+  await this.prisma.stockMovement.findMany({
 
     where: {
       tenantId,
     },
- orderBy: {
+
+    orderBy: {
       createdAt: "desc",
     },
   });
+
+return {
+
+  success: true,
+
+  data: movements,
+
+};
 }
 }

@@ -13,6 +13,10 @@ from "../prisma/prisma.service";
 import * as bcrypt
 from "bcrypt";
 
+import { CreateUserDto } from "./dto/create-user.dto";
+import { UpdateProfileDto } from "./dto/update-profile.dto";
+import { ChangePasswordDto } from "./dto/change-password.dto";
+
 @Injectable()
 export class UserService {
 
@@ -21,36 +25,47 @@ export class UserService {
 ) {}
 
   // GET USERS
-  async getAllUsers(
-    tenantId: string
-  ) {
+async getAllUsers(
+  tenantId: string
+) {
 
-    return this.prisma.user.findMany({
+  const users =
+    await this.prisma.user.findMany({
 
       where: {
         tenantId,
       },
 
       select: {
-  id: true,
-  email: true,
-  name: true,
-  phone: true,
-  role: true,
-  isActive: true,
-  lastLogin: true,
-  createdAt: true,
-},
+        id: true,
+        email: true,
+        name: true,
+        phone: true,
+        role: true,
+        isActive: true,
+        lastLogin: true,
+        createdAt: true,
+      },
 
     });
-  }
 
+  return {
+
+    success: true,
+
+    data: users,
+
+  };
+
+}
   // CREATE USER
-  async createUser(
-    data: any,
-    tenantId: string
-  ) {
-
+ async createUser(
+  data: CreateUserDto,
+  tenantId: string
+) {
+data.email = data.email
+  .trim()
+  .toLowerCase();
 if (
   !data.email ||
   !data.password ||
@@ -62,18 +77,28 @@ if (
 }
 
 if (
-  data.password.length < 6
+  data.password.length < 8
 ) {
   throw new BadRequestException(
-    "Password must be at least 6 characters"
+    "Password must be at least 8 characters"
   );
 }  
+
+data.email =
+data.email
+.trim()
+.toLowerCase();
     const existing =
       await this.prisma.user.findUnique({
 
         where: {
-          email: data.email,
-        },
+
+  email:
+    data.email
+      .trim()
+      .toLowerCase(),
+
+}
       });
 
     if (existing) {
@@ -115,7 +140,8 @@ if (
 
         data: {
 
-          email: data.email,
+          email:
+data.email,
 
           password:
             hashedPassword,
@@ -150,7 +176,15 @@ if (
   },
 });
 
-    return user;
+    return {
+
+ success:true,
+
+ message:"User created",
+
+ data:user
+
+};
   }
 
   // UPDATE ROLE
@@ -423,6 +457,7 @@ async getProfile(
       name: true,
       phone: true,
       role: true,
+      tenantId:true,
       isActive: true,
       lastLogin: true,
       createdAt: true,
@@ -433,7 +468,7 @@ async getProfile(
 // UPDATE PROFILE
 async updateProfile(
   userId: string,
-  data: any
+  data: UpdateProfileDto
 ) {
 
   return this.prisma.user.update({
@@ -443,16 +478,19 @@ async updateProfile(
     },
 
     data: {
-      name: data.name,
-      phone: data.phone,
-    },
+
+ name:data.name?.trim(),
+
+ phone:data.phone?.trim(),
+
+}
   });
 }
 
 // CHANGE PASSWORD
 async changePassword(
   userId: string,
-  data: any
+  data: ChangePasswordDto
 ) {
 
   const user =
@@ -473,7 +511,7 @@ async changePassword(
   const isMatch =
     await bcrypt.compare(
 
-      data.currentPassword,
+      data.oldPassword,
 
       user.password
     );
@@ -487,14 +525,24 @@ async changePassword(
 
   if (
     !data.newPassword ||
-    data.newPassword.length < 6
+    data.newPassword.length < 8
   ) {
 
     throw new BadRequestException(
-      "New password must be at least 6 characters"
+      "New password must be at least 8 characters"
     );
   }
 
+  if (
+ data.oldPassword ===
+ data.newPassword
+){
+
+ throw new BadRequestException(
+   "New password must be different"
+ );
+
+}
   const hashedPassword =
     await bcrypt.hash(
       data.newPassword,

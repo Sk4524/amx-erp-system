@@ -9,6 +9,12 @@ import {
   UseGuards,
 } from "@nestjs/common";
 
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiTags,
+} from "@nestjs/swagger";
+
 import { UserService }
 from "./user.service";
 
@@ -21,10 +27,17 @@ from "../auth/roles.guard";
 import { Roles }
 from "../auth/roles.decorator";
 
+import { CreateUserDto } from "./dto/create-user.dto";
+import { UpdateRoleDto } from "./dto/update-role.dto";
+import { UpdateProfileDto } from "./dto/update-profile.dto";
+import { ChangePasswordDto } from "./dto/change-password.dto";
+
 @UseGuards(
   JwtAuthGuard,
   RolesGuard
 )
+@ApiTags("Users")
+@ApiBearerAuth()
 @Controller("users")
 export class UserController {
 
@@ -33,6 +46,9 @@ export class UserController {
   ) {}
 
   // GET USERS
+  @ApiOperation({
+  summary: "Get all users"
+})
   @Get()
   @Roles("ADMIN")
   getUsers(
@@ -45,12 +61,15 @@ export class UserController {
   }
 
   // CREATE USER
-  @Post()
-  @Roles("ADMIN")
-  createUser(
-    @Body() body: any,
-    @Req() req: any
-  ) {
+  @ApiOperation({
+  summary: "Create user"
+})
+@Post()
+@Roles("ADMIN")
+createUser(
+  @Body() body: CreateUserDto,
+  @Req() req: any
+) { 
 
     return this.userService.createUser(
       body,
@@ -59,11 +78,14 @@ export class UserController {
   }
 
   // CHANGE ROLE
+  @ApiOperation({
+  summary: "Update user role"
+})
   @Put(":id/role")
-  @Roles("ADMIN")
- updateRole(
+@Roles("ADMIN")
+updateRole(
   @Param("id") id: string,
-  @Body() body: any,
+  @Body() body: UpdateRoleDto,
   @Req() req: any
 ) {
 
@@ -74,6 +96,11 @@ export class UserController {
 );
   }
 
+
+
+@ApiOperation({
+  summary: "Enable user"
+})
 @Put(":id/enable")
 @Roles("ADMIN")
 enableUser(
@@ -87,6 +114,10 @@ enableUser(
 }
 
   // DISABLE USER
+
+@ApiOperation({
+  summary: "Disable user"
+})
 @Put(":id/disable")
 @Roles("ADMIN")
 disableUser(
@@ -100,7 +131,18 @@ disableUser(
 }
 
 // GET PROFILE
+@ApiOperation({
+  summary: "Get profile"
+})
 @Get("profile")
+@Roles(
+  "ADMIN",
+  "MANAGER",
+  "HR",
+  "FINANCE",
+  "SALES",
+  "EMPLOYEE"
+)
 getProfile(
   @Req() req: any
 ) {
@@ -111,9 +153,20 @@ getProfile(
 }
 
 // UPDATE PROFILE
+@ApiOperation({
+  summary: "Update profile"
+})
 @Put("profile")
+@Roles(
+  "ADMIN",
+  "MANAGER",
+  "HR",
+  "FINANCE",
+  "SALES",
+  "EMPLOYEE"
+)
 updateProfile(
-  @Body() body: any,
+  @Body() body: UpdateProfileDto,
   @Req() req: any
 ) {
 
@@ -123,9 +176,23 @@ updateProfile(
   );
 }
 
+
+
+
+@ApiOperation({
+  summary: "Change password"
+})
 @Put("change-password")
+@Roles(
+  "ADMIN",
+  "MANAGER",
+  "HR",
+  "FINANCE",
+  "SALES",
+  "EMPLOYEE"
+)
 changePassword(
-  @Body() body: any,
+  @Body() body: ChangePasswordDto,
   @Req() req: any
 ) {
 

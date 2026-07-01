@@ -55,6 +55,9 @@ implements ExceptionFilter {
         : "Internal server error";
 
     // RESPONSE
+    console.log("========== EXCEPTION ==========");
+console.error(exception);
+console.log("===============================");
     response.status(status).json({
 
       success: false,

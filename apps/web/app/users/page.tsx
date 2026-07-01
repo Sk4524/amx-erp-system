@@ -24,6 +24,9 @@ import api from "../../lib/api";
 export default function UsersPage() {
 
   const [users, setUsers] = useState<any[]>([]);
+  useEffect(() => {
+  console.log("USERS STATE =", users);
+}, [users]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -52,38 +55,35 @@ export default function UsersPage() {
 
 
   const fetchUsers = async () => {
+  try {
+    setLoading(true);
 
-    try {
+    const res = await api.get("/users");
 
-      setLoading(true);
+    console.log(res.data);
 
-      const res =
-        await api.get("/users");
+  const usersData =
+  res.data.data?.data ??
+  res.data.data ??
+  [];
 
-      if (Array.isArray(res.data)) {
+setUsers(
+  Array.isArray(usersData)
+    ? usersData
+    : []
+);
 
-        setUsers(res.data);
+  } catch {
 
-      } else if (res.data?.data) {
+    toast.error("Failed to load users");
+    setUsers([]);
 
-        setUsers(res.data.data);
+  } finally {
 
-      } else {
+    setLoading(false);
 
-        setUsers([]);
-      }
-
-    } catch {
-
-      toast.error(
-        "Failed to load users"
-      );
-
-    } finally {
-
-      setLoading(false);
-    }
-  };
+  }
+};
 
 
   useEffect(() => {

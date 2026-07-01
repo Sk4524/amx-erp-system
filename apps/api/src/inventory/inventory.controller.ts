@@ -21,11 +21,12 @@ import { Roles } from "../auth/roles.decorator";
 
 import {
   ApiBearerAuth,
-  ApiTags,
+ApiTags,
+ApiOperation,
 } from "@nestjs/swagger";
 
-import { CreateInventoryDto }
-from "./dto/create-inventory.dto";
+import { CreateInventoryDto } from "./dto/create-inventory.dto";
+import { UpdateInventoryDto } from "./dto/update-inventory.dto";
 
 @UseGuards(
   JwtAuthGuard,
@@ -44,25 +45,35 @@ export class InventoryController {
   ) {}
 
   // GET INVENTORY
+@ApiOperation({
+  summary: "Get all inventory items",
+})
 @Get()
 @Roles(
   "ADMIN",
   "MANAGER",
   "SALES",
-  "FINANCE"
+  "FINANCE",
 )
 getAll(
   @Req() req: any,
-  @Query("search") search?: string
+  @Query("search") search?: string,
 ) {
 
   return this.service.getAll(
     req.user.tenantId,
-    search || ""
+    search || "",
   );
+
 }
 
+
+
+
   // CREATE INVENTORY
+  @ApiOperation({
+  summary: "Create inventory item",
+})
 @Post()
 @Roles("ADMIN")
 create(
@@ -80,12 +91,30 @@ create(
   );
 }
 
+//bulk inventory create
+@ApiOperation({
+  summary: "Bulk import inventory items",
+})
+@Post("bulk")
+@Roles("ADMIN")
+createBulk(
+  @Body() body: CreateInventoryDto[],
+  @Req() req: any,
+) {
+  return this.service.createBulk(
+    body,
+    req.user.tenantId,
+  );
+}
   // UPDATE INVENTORY
+  @ApiOperation({
+  summary: "Update inventory item",
+})
   @Put(":id")
   @Roles("ADMIN")
   update(
   @Param("id") id: string,
-  @Body() body: CreateInventoryDto,
+  @Body() body: UpdateInventoryDto,
   @Req() req: any
 ) {
 
@@ -101,6 +130,9 @@ create(
 );
 }
   // DELETE INVENTORY
+  @ApiOperation({
+  summary: "Delete inventory item",
+})
   @Delete(":id")
   @Roles("ADMIN")
   delete(
@@ -118,6 +150,9 @@ return this.service.delete(
 }
 
   // CREATE PURCHASE ORDER
+  @ApiOperation({
+  summary: "Create purchase order",
+})
   @Post("purchase-orders")
   @Roles("ADMIN")
   createPurchaseOrder(
@@ -133,6 +168,9 @@ return this.service.delete(
   }
 
   // GET PURCHASE ORDERS
+  @ApiOperation({
+  summary: "Get purchase orders",
+})
   @Get("purchase-orders")
   @Roles(
   "ADMIN",
@@ -148,6 +186,9 @@ return this.service.delete(
   }
 
   // COMPLETE PURCHASE ORDER
+  @ApiOperation({
+  summary: "Complete purchase order",
+})
   @Post("purchase-orders/:id/complete")
   @Roles("ADMIN")
   completePurchaseOrder(
@@ -166,6 +207,9 @@ return this.service.delete(
 
   }
   // GET STOCK MOVEMENTS
+  @ApiOperation({
+  summary: "Get stock movement history",
+})
 @Get("stock-movements")
 @Roles(
   "ADMIN",
@@ -179,5 +223,27 @@ getStockMovements(
   return this.service.getStockMovements(
     req.user.tenantId
   );
+}
+
+@ApiOperation({
+  summary: "Get inventory item by id",
+})
+@Get(":id")
+@Roles(
+  "ADMIN",
+  "MANAGER",
+  "SALES",
+  "FINANCE",
+)
+getOne(
+  @Param("id") id: string,
+  @Req() req: any,
+) {
+
+  return this.service.getOne(
+    id,
+    req.user.tenantId,
+  );
+
 }
 }
