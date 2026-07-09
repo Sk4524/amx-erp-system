@@ -106,8 +106,18 @@ export default function SalesPage() {
           );
 
         setCustomers(
-          res.data.data || []
-        );
+
+  Array.isArray(res.data)
+
+    ? res.data
+
+    : Array.isArray(res.data.data)
+
+    ? res.data.data
+
+    : []
+
+);
 
       } catch (err) {
 
@@ -129,8 +139,18 @@ export default function SalesPage() {
           );
 
         setOrders(
-          res.data.data || []
-        );
+
+  Array.isArray(res.data)
+
+    ? res.data
+
+    : Array.isArray(res.data.data)
+
+    ? res.data.data
+
+    : []
+
+);
 
       } catch (err) {
 
@@ -141,27 +161,30 @@ export default function SalesPage() {
     };
 
   // FETCH INVENTORY
-  const fetchInventory =
-    async () => {
+ const fetchInventory = async () => {
 
-      try {
+  try {
 
-        const res =
-          await api.get(
-            "/inventory"
-          );
+    const res = await api.get("/inventory");
 
-        setInventory(
-          res.data.data || []
-        );
+    const inventoryData =
+      Array.isArray(res.data)
+        ? res.data
+        : Array.isArray(res.data.data)
+        ? res.data.data
+        : [];
 
-      } catch (err) {
+    setInventory(inventoryData);
 
-        console.log(err);
+  } catch (err) {
 
-        setInventory([]);
-      }
-    };
+    console.log(err);
+
+    setInventory([]);
+
+  }
+
+};
 
   // INITIAL LOAD
   useEffect(() => {

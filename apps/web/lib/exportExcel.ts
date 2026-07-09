@@ -72,4 +72,48 @@ export const exportDashboardExcel = (
     data,
     "amx-erp-report.xlsx"
   );
+
+};
+
+export const exportTransactionsToExcel = (
+  transactions: any[]
+) => {
+
+  const workbook = XLSX.utils.book_new();
+
+  const sheetData = transactions.map((tx) => ({
+    Type: tx.type,
+    Amount: Number(tx.amount),
+    Account: tx.account?.name || "-",
+    Date: new Date(tx.createdAt).toLocaleDateString("en-IN"),
+  }));
+
+  const worksheet =
+    XLSX.utils.json_to_sheet(sheetData);
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    "Finance Transactions"
+  );
+
+  const excelBuffer =
+    XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+  const data = new Blob(
+    [excelBuffer],
+    {
+      type:
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+    }
+  );
+
+  saveAs(
+    data,
+    `finance-transactions-${Date.now()}.xlsx`
+  );
+
 };

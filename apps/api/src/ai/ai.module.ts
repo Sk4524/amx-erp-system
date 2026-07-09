@@ -8,7 +8,8 @@ from "./ai.service";
 
 import { PrismaModule }
 from "../prisma/prisma.module";
-
+import { DashboardAIService }
+from "./services/dashboard-ai.service";
 @Module({
 
   imports: [
@@ -23,8 +24,18 @@ from "../prisma/prisma.module";
 
   providers: [
 
-    AIService
+    AIService,
+
+    DashboardAIService,
   ],
+
+   exports: [
+
+    AIService,
+
+    DashboardAIService,
+
+],
 })
 
 export class AIModule {}

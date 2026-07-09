@@ -6,11 +6,14 @@ import {
   Headers,
 } from "@nestjs/common";
 
+
+import { DashboardAIService }
+from "../ai/services/dashboard-ai.service";
+
 import { JwtAuthGuard }
 from "../auth/jwt.guard";
 import { AnalyticsService } from "./analytics.service";
-import { AIInsightsService }
-from "./ai-insights.service";
+
 import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
 
@@ -23,9 +26,8 @@ export class AnalyticsController {
   private analyticsService:
   AnalyticsService,
 
-  private aiInsightsService:
-  AIInsightsService
-
+private dashboardAIService:
+DashboardAIService
 ) {}
 
   // DASHBOARD
@@ -76,15 +78,18 @@ async getAIInsights(
   @Req() req: any
 ){
 
-  const data =
-    await this.aiInsightsService.generateInsights(
-      req.user.tenantId
-    );
+const data =
+  await this.dashboardAIService.generateDashboardAI(
+  req.user.tenantId
+);
 
-  return {
-    success: true,
-    data,
-  };
+return {
+
+  success: true,
+
+  data,
+
+};
   
   
 }

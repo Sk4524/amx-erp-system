@@ -202,7 +202,11 @@ this.realtimeGateway.sendNotification({
   message:
     `${transaction.type} transaction of ₹${transaction.amount} created.`,
 });
-      return transaction;
+      return {
+  success: true,
+  message: "Transaction created",
+  data: transaction,
+};
 
     } catch (error) {
 
@@ -288,7 +292,11 @@ await this.auditService.createLog({
   tenantId,
 });
 
-return deletedTransaction;
+return {
+  success: true,
+  message: "Transaction deleted",
+  data: deletedTransaction,
+};
 }
 
   // GET ACCOUNTS
@@ -313,8 +321,13 @@ return deletedTransaction;
     accounts
   );
 
-  return accounts;
+  return {
+  success: true,
+  message: "Accounts fetched",
+  data: accounts,
+};
 }
+
 
   // CREATE ACCOUNT
 async createAccount(
@@ -348,7 +361,11 @@ async createAccount(
     tenantId,
   });
 
-  return account;
+  return {
+  success: true,
+  message: "Account created",
+  data: account,
+};
 }
 
   // GET LEDGER ENTRIES
@@ -356,21 +373,27 @@ async createAccount(
     tenantId: string
   ) {
 
-    return this.prisma.ledger.findMany({
+    const ledger = await this.prisma.ledger.findMany({
 
-      where: {
-        tenantId,
-      },
+  where: {
+    tenantId,
+  },
 
-      include: {
-        account: true,
-        transaction: true,
-      },
+  include: {
+    account: true,
+    transaction: true,
+  },
 
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+  orderBy: {
+    createdAt: "desc",
+  },
+});
+
+return {
+  success: true,
+  message: "Ledger fetched",
+  data: ledger,
+};
   }
    // CREATE PAYABLE
 async createPayable(
@@ -424,23 +447,34 @@ await this.auditService.createLog({
   tenantId,
 });
 
-return payable;
+return {
+  success: true,
+  message: "Payable created",
+  data: payable,
+};
 }
   // GET PAYABLES
   async getPayables(
     tenantId: string
   ) {
 
-    return this.prisma.payable.findMany({
+    const payables =
+  await this.prisma.payable.findMany({
 
-      where: {
-        tenantId,
-      },
+    where: {
+      tenantId,
+    },
 
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+return {
+  success: true,
+  message: "Payables fetched",
+  data: payables,
+};
   }
 
   // MARK PAYABLE PAID
@@ -527,7 +561,11 @@ await this.auditService.createLog({
   tenantId,
 });
 
-return updatedPayable;
+return {
+  success: true,
+  message: "Payable marked as paid",
+  data: updatedPayable,
+};
 }
 // CREATE RECEIVABLE
 async createReceivable(
@@ -581,24 +619,34 @@ await this.auditService.createLog({
   tenantId,
 });
 
-return receivable;
+return {
+  success: true,
+  message: "Receivable created",
+  data: receivable,
+};
 }
 
   // GET RECEIVABLES
   async getReceivables(
     tenantId: string
   ) {
+const receivables =
+  await this.prisma.receivable.findMany({
 
-    return this.prisma.receivable.findMany({
+    where: {
+      tenantId,
+    },
 
-      where: {
-        tenantId,
-      },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
 
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+return {
+  success: true,
+  message: "Receivables fetched",
+  data: receivables,
+};
   }
 
   // MARK RECEIVABLE RECEIVED
@@ -686,6 +734,185 @@ await this.auditService.createLog({
   tenantId,
 });
 
-return updatedReceivable;
+return {
+  success: true,
+  message: "Receivable marked as received",
+  data: updatedReceivable,
+};
 }
+
+async getAccount(
+  id: string,
+  tenantId: string,
+) {
+
+  const account =
+    await this.prisma.account.findFirst({
+
+      where: {
+        id,
+        tenantId,
+      },
+
+    });
+
+  if (!account) {
+
+    throw new NotFoundException(
+      "Account not found",
+    );
+
+  }
+
+  return {
+    success: true,
+    message: "Account fetched",
+    data: account,
+  };
+
+}
+
+async updateAccount(
+  id: string,
+  data: any,
+  tenantId: string,
+  userEmail = "SYSTEM",
+) {
+
+  const account =
+    await this.prisma.account.findFirst({
+
+      where: {
+        id,
+        tenantId,
+      },
+
+    });
+
+  if (!account) {
+
+    throw new NotFoundException(
+      "Account not found",
+    );
+
+  }
+
+  const updated =
+    await this.prisma.account.update({
+
+      where: {
+        id,
+      },
+
+      data,
+
+    });
+
+  await this.auditService.createLog({
+
+    action: "ACCOUNT_UPDATED",
+
+    module: "FINANCE",
+
+    description:
+      `Updated account ${updated.name}`,
+
+    userEmail,
+
+    tenantId,
+
+  });
+
+  return {
+
+    success: true,
+
+    message: "Account updated",
+
+    data: updated,
+
+  };
+
+}
+
+async deleteAccount(
+  id: string,
+  tenantId: string,
+  userEmail = "SYSTEM",
+) {
+
+const account =
+  await this.prisma.account.findFirst({
+
+    where: {
+      id,
+      tenantId,
+    },
+
+    include: {
+      transactions: true,
+      ledgers: true,
+    },
+
+  });
+
+  if (!account) {
+
+    throw new NotFoundException(
+      "Account not found",
+    );
+
+  }
+
+if (
+
+  account.transactions.length > 0 ||
+
+  account.ledgers.length > 0
+
+) {
+
+  throw new Error(
+
+    "Cannot delete account with existing transactions."
+
+  );
+
+}
+
+  await this.prisma.account.delete({
+
+    where: {
+      id,
+    },
+
+  });
+
+  await this.auditService.createLog({
+
+    action: "ACCOUNT_DELETED",
+
+    module: "FINANCE",
+
+    description:
+      `Deleted account ${account.name}`,
+
+    userEmail,
+
+    tenantId,
+
+  });
+
+  return {
+
+    success: true,
+
+    message: "Account deleted",
+
+    data: account,
+
+  };
+
+}
+
 }

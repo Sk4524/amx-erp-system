@@ -1,5 +1,8 @@
 import { CreateReceivableDto }
 from "./dto/create-receivable.dto";
+
+import { UpdateAccountDto }
+from "./dto/update-account.dto";
 import { CreateTransactionDto }
 from "./dto/create-transaction.dto";
 import {
@@ -9,6 +12,7 @@ import {
   Delete,
   Param,
   Body,
+  Put,
   Req,
   Query,
   UseGuards,
@@ -105,6 +109,46 @@ deleteTransaction(
     );
   }
 
+  @Get("accounts/:id")
+@Roles("ADMIN", "FINANCE")
+getAccount(
+  @Param("id") id: string,
+  @Req() req: any,
+) {
+  return this.service.getAccount(
+    id,
+    req.user.tenantId,
+  );
+}
+
+@Put("accounts/:id")
+@Roles("ADMIN")
+updateAccount(
+  @Param("id") id: string,
+  @Body() body: UpdateAccountDto,
+  @Req() req: any,
+) {
+  return this.service.updateAccount(
+    id,
+    body,
+    req.user.tenantId,
+    req.user.email,
+  );
+}
+
+@Delete("accounts/:id")
+@Roles("ADMIN")
+deleteAccount(
+  @Param("id") id: string,
+  @Req() req: any,
+) {
+  return this.service.deleteAccount(
+    id,
+    req.user.tenantId,
+    req.user.email,
+  );
+}
+
   // CREATE ACCOUNT
   @Post("accounts")
   @Roles("ADMIN")
@@ -114,9 +158,10 @@ deleteTransaction(
   ) {
 
     return this.service.createAccount(
-      body,
-      req.user.tenantId
-    );
+  body,
+  req.user.tenantId,
+  req.user.email,
+);
   }
 
   // GET LEDGER

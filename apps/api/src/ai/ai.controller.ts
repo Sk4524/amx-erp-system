@@ -8,6 +8,7 @@ import {
 import { AIService }
 from "./ai.service";
 
+
 @Controller("ai")
 
 export class AIController {

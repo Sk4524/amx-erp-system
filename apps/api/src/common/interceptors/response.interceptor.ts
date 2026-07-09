@@ -17,11 +17,26 @@ export class ResponseInterceptor<T>
     next: CallHandler,
   ): Observable<any> {
 
-    return next.handle().pipe(
-      map((data) => ({
-        success: true,
-        data,
-      })),
-    );
+   return next.handle().pipe(
+  map((data: any) => {
+
+    // If response is already standardized,
+    // don't wrap it again.
+    if (
+      data &&
+      typeof data === "object" &&
+      "success" in data
+    ) {
+      return data;
+    }
+
+    // Wrap plain responses
+    return {
+      success: true,
+      data,
+    };
+
+  }),
+);
   }
 }
