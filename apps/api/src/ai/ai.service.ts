@@ -3,9 +3,12 @@ from "@nestjs/common";
 
 import { PrismaService }
 from "../prisma/prisma.service";
+import { askGroq }
+from "./helpers/groq";
+import { runAI } from "./engine/AIEngine";
+import { runCopilot }
+from "./copilot/Copilot";
 
-import Groq
-from "groq-sdk";
 import { dashboardPrompt } from "./prompts/dashboard.prompt";
 
 
@@ -15,13 +18,7 @@ from "./context/dashboard.context";
 
 export class AIService {
 
-  private groq =
-    new Groq({
-
-      apiKey:
-        process.env.GROQ_API_KEY,
-    });
-
+ 
   constructor(
 
     private prisma:
@@ -30,46 +27,21 @@ export class AIService {
   ) {}
 private async askAI(
 
-    systemPrompt: string,
+  systemPrompt: string,
 
-    context: string
+  context: string
 
 ) {
 
-    const completion =
-      await this.groq.chat.completions.create({
+  return askGroq(
 
-        model:
-          "llama-3.3-70b-versatile",
+    systemPrompt,
 
-        messages: [
+    context
 
-          {
+  );
 
-            role: "system",
-
-            content: systemPrompt,
-
-          },
-
-          {
-
-            role: "user",
-
-            content: context,
-
-          },
-
-        ],
-
-      });
-
-    return completion
-      .choices[0]
-      ?.message
-      ?.content;
 }
-
 
   async chat(
 
@@ -80,40 +52,23 @@ private async askAI(
   ) {
 
     try {
-      const dashboard =
+  const dashboard =
   await buildDashboardContext(
     this.prisma,
     tenantId
   );
 
-const context =
-  JSON.stringify(
-    {
-      question: message,
-      dashboard,
-    },
-    null,
-    2
-  );
+return await runCopilot(
 
-     
-      // GROQ AI
-const response =
-  await this.askAI(
-    dashboardPrompt,
-    context
-  );
+    tenantId,
 
-     return {
+    message,
 
-  reply:
+    dashboard,
 
-    response ||
+    this.askAI.bind(this)
 
-    "AI unavailable",
-
-};
-
+);
     } catch (error: any) {
 
   console.log(

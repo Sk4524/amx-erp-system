@@ -6,6 +6,9 @@ from "./ai.controller";
 import { AIService }
 from "./ai.service";
 
+import { FinanceAIService }
+from "./services/finance-ai.service";
+
 import { PrismaModule }
 from "../prisma/prisma.module";
 import { DashboardAIService }
@@ -27,6 +30,7 @@ from "./services/dashboard-ai.service";
     AIService,
 
     DashboardAIService,
+    FinanceAIService
   ],
 
    exports: [

@@ -119,93 +119,16 @@ const risk =
 
         );
 
- const profit =
-    revenue - expense;
-
-    const expenseRatio =
-    revenue > 0
-        ? Number(
-            (
-                (expense / revenue) * 100
-            ).toFixed(2)
-        )
-        : 0;
-
-const inventoryValue =
-    inventory.reduce(
-
-        (sum, item) =>
-
-            sum +
-            (item.price * item.quantity),
-
-        0
-
-    );
-
-const averageStock =
-
-    inventory.length > 0
-
-        ? Math.round(
-
-            inventory.reduce(
-
-                (sum, item) =>
-
-                    sum + item.quantity,
-
-                0
-
-            ) / inventory.length
-
-        )
-
-        : 0;
-
-const salesVolume =
-
-    sales.reduce(
-
-        (sum, sale) =>
-
-            sum + sale.quantity,
-
-        0
-
-    );
-
-const totalSalary =
-    employees.reduce(
-
-        (sum, emp) =>
-
-            sum + emp.salary,
-
-        0
-
-    );
-
-const averageSalary =
-    employees.length
-
-        ? Math.round(
-            totalSalary /
-            employees.length
-        )
-
-        : 0;
 
 const topProducts =
 
-    inventory
+    [...inventory]
 
         .sort(
 
             (a, b) =>
 
-                b.quantity -
-                a.quantity
+                b.quantity - a.quantity
 
         )
 
@@ -230,48 +153,60 @@ const latestSales =
 
 return {
 
-    employees,
+employeeCount: employees.length,
 
-    inventory,
+revenue,
 
-    sales,
+expense: finance.expense,
 
-    expense: finance.expense,
+profit: finance.profit,
 
-    transactions,
+expenseRatio: finance.expenseRatio,
 
-    revenue,
+inventoryValue: inventoryStats.inventoryValue,
 
-    expenseRatio: finance.expenseRatio,
+averageStock: inventoryStats.averageStock,
 
-    profit: finance.profit,
+salesVolume: salesStats.salesVolume,
 
-    lowStock:
-  inventoryStats.lowStock,
+lowStock: inventoryStats.lowStock,
 
-    totalSalary:
-  hrStats.totalSalary,
+totalSalary: hrStats.totalSalary,
 
-    averageSalary:
-  hrStats.averageSalary,
+averageSalary: hrStats.averageSalary,
 
-    topProducts,
+topProducts: topProducts.map(p => ({
+  name: p.productName,
+  stock: p.quantity
+})),
 
-    criticalProducts:
-  inventoryStats.outOfStock,
+criticalProducts: criticalProducts.map(p => ({
+  name: p.productName,
+  stock: p.quantity
+})),
 
-    latestTransactions,
+latestSales: latestSales.map(s => ({
+  qty: s.quantity,
+  total: s.totalAmount
+})),
 
-    latestSales,
+latestTransactions: latestTransactions.map(t => ({
+  type: t.type,
+  amount: t.amount
+})),
 
-inventoryValue:
-  inventoryStats.inventoryValue,
+finance,
 
-averageStock:
-  inventoryStats.averageStock,
+inventoryStats,
 
-salesVolume:
-  salesStats.salesVolume,
+salesStats,
+
+hrStats,
+
+procurement,
+
+risk,
+
 
 };
 

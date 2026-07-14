@@ -1,20 +1,29 @@
 export interface DashboardAIResponse {
 
-  businessHealth:number;
+  businessHealth: number;
 
-  businessScore:number;
+  businessScore: number;
 
-  businessStatus:string;
+  businessStatus: string;
 
-  executiveSummary:string;
+  executiveSummary: string;
 
-  insights:any[];
+  insights: any[];
 
-  financialInsights:any[];
+  financialInsights: any[];
 
-  predictions:any[];
+  hrInsights: any[];
 
-  riskAlerts:any[];
+  predictions: any[];
 
-  smartNotifications:any[];
+  procurementRecommendations: any[];
+
+  riskAlerts: any[];
+
+  smartNotifications: any[];
+
+  growthOpportunities: any[];
+
+  recommendations: any[];
+
 }
