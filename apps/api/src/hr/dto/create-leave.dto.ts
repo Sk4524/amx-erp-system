@@ -7,11 +7,9 @@ import { ApiProperty } from "@nestjs/swagger";
 
 export class CreateLeaveDto {
 
-  @ApiProperty()
-  @IsString()
-  employeeId: string;
-
-  @ApiProperty()
+ @ApiProperty({
+    example: "Family Function",
+  })
   @IsString()
   reason: string;
 

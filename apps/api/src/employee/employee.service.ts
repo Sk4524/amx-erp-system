@@ -3,67 +3,194 @@ import {
   NotFoundException,
   BadRequestException,
 } from "@nestjs/common";
-
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "src/audit/audit.service";
 import { CreateEmployeeDto } from "./dto/create-employee.dto";
 import { UpdateEmployeeDto } from "./dto/update-employee.dto";
-
+import { EmployeeOnboardingService } from "./services/employee-onboarding.service";
 @Injectable()
 export class EmployeeService {
   constructor(
-    private prisma: PrismaService,
-    private auditService: AuditService,
-  ) {}
+  private prisma: PrismaService,
+  private auditService: AuditService,
+  private onboardingService: EmployeeOnboardingService,
+) {}
 
-  async getAll(
-    tenantId: string,
-    page = 1,
-    limit = 10,
-    search = "",
-  ) {
+
+async create(
+  data: CreateEmployeeDto,
+  tenantId: string,
+  userEmail: string,
+) {
+  return this.onboardingService.createEmployeeAccount(
+    data,
+    tenantId,
+    userEmail,
+  );
+}
+
+async bulkCreate(
+  employees: CreateEmployeeDto[],
+  tenantId: string,
+  userEmail: string,
+) {
+  const created = [];
+  const failed = [];
+
+  for (const employee of employees) {
+    try {
+   const result =
+  await this.onboardingService.createEmployeeAccount(
+    employee,
+    tenantId,
+    userEmail,
+  );
+
+      created.push(result.data);
+    } catch (error: any) {
+      failed.push({
+        email: employee.email,
+        reason: error.message,
+      });
+    }
+  }
+
+  return {
+    success: true,
+    summary: {
+      total: employees.length,
+      created: created.length,
+      failed: failed.length,
+    },
+    created,
+    failed,
+  };
+}
+
+async getAll(
+  tenantId: string,
+  page = 1,
+  limit = 10,
+  search = "",
+  department?: string,
+  designation?: string,
+  status?: string,
+  employmentType?: string,
+  sortBy = "createdAt",
+  sortOrder: "asc" | "desc" = "desc",
+){
     const skip =
       (page - 1) * limit;
 
-   const where = {
+
+      const where = {
   tenantId,
 
-  OR: [
+  ...(search.trim()
+    ? {
+        OR: [
+          {
+            name: {
+              contains: search,
+              mode: "insensitive" as const,
+            },
+          },
+          {
+            email: {
+              contains: search,
+              mode: "insensitive" as const,
+            },
+          },
+          {
+            employeeCode: {
+              contains: search,
+              mode: "insensitive" as const,
+            },
+          },
+          {
+            department: {
+              contains: search,
+              mode: "insensitive" as const,
+            },
+          },
+          {
+            designation: {
+              contains: search,
+              mode: "insensitive" as const,
+            },
+          },
+          {
+            phone: {
+              contains: search,
+              mode: "insensitive" as const,
+            },
+          },
+          {
+            status: {
+              contains: search,
+              mode: "insensitive" as const,
+            },
+          },
+        ],
+      }
+    : {}),
 
-    {
-      name: {
-        contains: search,
-        mode: "insensitive" as const,
-      },
-    },
+  ...(department
+    ? {
+        department,
+      }
+    : {}),
 
-    {
-      position: {
-        contains: search,
-        mode: "insensitive" as const,
-      },
-    },
+  ...(designation
+    ? {
+        designation,
+      }
+    : {}),
 
-  ],
+  ...(status
+    ? {
+        status,
+      }
+    : {}),
 
+  ...(employmentType
+    ? {
+        employmentType,
+      }
+    : {}),
 };
 
-    const [employees, total] =
-      await Promise.all([
-        this.prisma.employee.findMany({
-          where,
-          skip,
-          take: limit,
+const allowedSortFields = [
+  "createdAt",
+  "name",
+  "email",
+  "department",
+  "designation",
+  "salary",
+  "joiningDate",
+  "employeeCode",
+];
 
-          orderBy: {
-            createdAt: "desc",
-          },
-        }),
+const orderField = allowedSortFields.includes(sortBy)
+  ? sortBy
+  : "createdAt";
 
-        this.prisma.employee.count({
-          where,
-        }),
-      ]);
+const [employees, total] = await Promise.all([
+  this.prisma.employee.findMany({
+    where,
+    skip,
+    take: limit,
+
+    orderBy: {
+      [orderField]: sortOrder,
+    },
+  }),
+
+  this.prisma.employee.count({
+    where,
+  }),
+]);   
+
 return {
   success: true,
 
@@ -77,124 +204,6 @@ return {
   },
 };
   }
-
-  async create(
-    data: CreateEmployeeDto,
-    tenantId: string,
-    userEmail: string,
-  ) {
-    data.name = data.name.trim();
-data.position = data.position.trim();
-    const existingEmployee =
-      await this.prisma.employee.findFirst({
-       where:{
-tenantId,
-name:{
-equals:data.name,
-mode:"insensitive"
-}
-}
-      });
-
-    if (existingEmployee) {
-      throw new BadRequestException(
-        "Employee already exists",
-      );
-    }
-
-
-
-    if (data.salary < 0) {
-
-throw new BadRequestException(
-"Salary cannot be negative",
-);
-
-}
-    const employee =
-      await this.prisma.employee.create({
-        data: {
-          ...data,
-          tenantId,
-        },
-      });
-
-    await this.auditService.createLog({
-      action: "EMPLOYEE_CREATED",
-
-      module: "EMPLOYEE",
-
-      description:
-        `Created employee ${employee.name}`,
-
-      userEmail,
-
-      tenantId,
-    });
-
-    return {
-
-  success: true,
-
-  message: "Employee created successfully",
-
-  data: employee,
-
-};
-  }
-
-async createBulk(
-data: CreateEmployeeDto[],
-tenantId: string,
-userEmail: string,
-) {
-
-const employees=data.map(emp=>({
-
-name:emp.name.trim(),
-
-position:emp.position.trim(),
-
-salary:emp.salary,
-
-tenantId,
-
-}));
-
-const result=
-await this.prisma.employee.createMany({
-
-data:employees,
-
-skipDuplicates:true,
-
-});
-
-await this.auditService.createLog({
-
-action:"EMPLOYEE_BULK_CREATED",
-
-module:"EMPLOYEE",
-
-description:`Imported ${result.count} employees`,
-
-userEmail,
-
-tenantId,
-
-});
-
-return {
-
-  success: true,
-
-  message: `${result.count} employees imported successfully`,
-
-  data: result,
-
-};
-
-}
 
 
 async getOne(
@@ -383,21 +392,45 @@ if (
 
 }
     const updatedEmployee =
-      await this.prisma.employee.update({
-        where: {
-          id,
-        },
+  await this.prisma.$transaction(async (tx) => {
 
-        data:{
-...data,
+    await tx.user.update({
+      where: {
+        id: employee.userId,
+      },
 
-name:data.name?.trim(),
+      data: {
+        name: data.name?.trim(),
+        email: data.email?.trim().toLowerCase(),
+        phone: data.phone?.trim(),
+      },
+    });
 
-position:data.position?.trim(),
+    return tx.employee.update({
+      where: {
+        id,
+      },
 
-},
-      });
+      data: {
+        ...data,
 
+        name: data.name?.trim(),
+
+        email: data.email?.trim().toLowerCase(),
+
+        phone: data.phone?.trim(),
+
+        department: data.department?.trim(),
+
+        designation: data.designation?.trim(),
+
+        joiningDate: data.joiningDate
+          ? new Date(data.joiningDate)
+          : undefined,
+      },
+    });
+
+  });
     await this.auditService.createLog({
       action: "EMPLOYEE_UPDATED",
 

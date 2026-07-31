@@ -24,14 +24,22 @@ export class AuthService {
     try {
 
       if (
-        !data?.email ||
-        !data?.password ||
-        !data?.tenantName
-      ) {
-        throw new BadRequestException(
-          "All fields are required"
-        );
-      }
+  !data?.email ||
+  !data?.password
+) {
+  throw new BadRequestException(
+    "Email and password are required"
+  );
+}
+
+if (
+  !data?.tenantName &&
+  !data?.companyCode
+) {
+  throw new BadRequestException(
+    "Either tenantName or companyCode is required."
+  );
+} 
 
             data.email =
       data.email
@@ -59,65 +67,170 @@ export class AuthService {
         await bcrypt.hash(data.password, 10);
 
       // CREATE TENANT
-      const tenant =
-        await this.prisma.tenant.create({
-          data: {
-            name: data.tenantName,
-          },
-        });
+      let tenant;
 
-await this.prisma.account.create({
-  data: {
-    name: "Main Business Account",
-    type: "BANK",
-    balance: 0,
-    tenantId: tenant.id,
-  },
-});
+if (data.tenantName) {
 
-      // CREATE USER
-const user =
-  await this.prisma.user.create({
+  // COMPANY REGISTRATION
+
+  const companyCode =
+    data.tenantName
+      .replace(/[^A-Za-z]/g, "")
+      .toUpperCase()
+      .substring(0, 4) +
+    Math.random()
+      .toString(36)
+      .substring(2, 6)
+      .toUpperCase();
+
+  tenant =
+    await this.prisma.tenant.create({
+
+      data: {
+
+        name: data.tenantName,
+
+        companyCode,
+
+        industry: data.industry || null,
+
+        phone: data.phone || null,
+
+        email: data.email,
+
+        address: data.address || null,
+
+      },
+
+    });
+
+  await this.prisma.account.create({
+
     data: {
-      email: data.email,
-      password: hashedPassword,
 
-      // DEFAULT ROLE
-              role:
-        [
-        "ADMIN",
-        "MANAGER",
-        "HR",
-        "FINANCE",
-        "SALES",
-        "EMPLOYEE"
-        ].includes(data.role)
+      name: "Main Business Account",
 
-        ? data.role
+      type: "BANK",
 
-        : "ADMIN",
+      balance: 0,
 
       tenantId: tenant.id,
+
     },
+
   });
-      return {
-        success: true,
 
-        message:
-          "User registered successfully",
+} else {
 
-        data: {
+  // EMPLOYEE REGISTRATION
 
-          user: {
-            id: user.id,
-            email: user.email,
-            role: user.role,
-            tenantId: user.tenantId,
-          },
+  tenant =
+    await this.prisma.tenant.findUnique({
 
-          tenant,
-        },
-      };
+      where: {
+
+        companyCode:
+          data.companyCode,
+
+      },
+
+    });
+
+  if (!tenant) {
+
+    throw new BadRequestException(
+      "Invalid company code."
+    );
+
+  }
+
+}
+
+      // CREATE USER
+// COMPANY REGISTRATION
+if (data.tenantName) {
+
+  const user = await this.prisma.user.create({
+
+    data: {
+
+      email: data.email,
+
+      password: hashedPassword,
+
+      role: "ADMIN",
+
+      tenantId: tenant.id,
+
+      companyCode: tenant.companyCode,
+
+      name: data.name,
+
+      phone: data.phone,
+
+      isApproved: true,
+
+      isActive: true,
+
+    },
+
+  });
+
+  return {
+
+    success: true,
+
+    message: "Company registered successfully.",
+
+    data: {
+
+      companyCode: tenant.companyCode,
+
+      user,
+
+    },
+
+  };
+
+}
+
+// EMPLOYEE REGISTRATION
+
+await this.prisma.pendingEmployee.create({
+
+  data: {
+
+    name: data.name,
+
+    email: data.email,
+
+    password: hashedPassword,
+
+    role: data.role,
+
+    phone: data.phone,
+
+    department: data.department,
+
+    designation: data.designation,
+
+    companyCode: data.companyCode,
+
+    tenantId: tenant.id,
+
+  },
+
+});
+
+return {
+
+  success: true,
+
+  message:
+
+    "Registration submitted successfully. Please wait for HR/Admin approval.",
+
+};
 
     } catch (error) {
 
@@ -156,7 +269,11 @@ const user =
     "User account disabled"
   );
 }
-
+if (!user.isApproved) {
+  throw new UnauthorizedException(
+    "Your account is waiting for HR/Admin approval."
+  );
+}
       const isMatch =
         await bcrypt.compare(
           data.password,
@@ -180,6 +297,23 @@ await this.prisma.user.update({
   },
 });
 
+const employee =
+  await this.prisma.employee.findFirst({
+
+    where: {
+
+      userId: user.id,
+
+    },
+
+    select: {
+
+      id: true,
+
+    },
+
+  });
+
      const token =
   this.jwtService.sign({
     userId: user.id,
@@ -196,12 +330,21 @@ await this.prisma.user.update({
 
           access_token: token,
 
-          user: {
-            id: user.id,
-            email: user.email,
-            role: user.role,
-            tenantId: user.tenantId,
-          },
+         user: {
+
+          id: user.id,
+
+          employeeId: employee?.id || null,
+
+          name: user.name,
+
+          email: user.email,
+
+          role: user.role,
+
+          tenantId: user.tenantId,
+
+        },
         },
       };
 

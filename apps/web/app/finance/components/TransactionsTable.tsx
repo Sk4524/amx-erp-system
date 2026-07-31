@@ -5,13 +5,12 @@ import {
   ArrowDownCircle,
   ArrowUpCircle,
   Trash2,
-  Receipt,
   Download,
   FileSpreadsheet,
 } from "lucide-react";
 import { exportTransactionsToExcel }
   from "../../../lib/exportExcel";
-
+import EmptyState from "./EmptyState";
 import { exportTransactionsPDF }
   from "../../../lib/exportPDF";
 interface Props {
@@ -129,216 +128,237 @@ export default function TransactionsTable({
 
           </div>
 
-          </div>
+        </div>
 
-        {/* EMPTY */ }
+        {/* EMPTY */}
 
-  {
-    transactions.length === 0 && (
+        {transactions.length === 0 && (
 
-      <div className="py-20 text-center">
+          <EmptyState
+            title="No Transactions"
+            description="Financial transactions will appear here once they are created."
+          />
 
-        <Receipt
-          size={70}
-          className="mx-auto text-blue-500 mb-6"
-        />
+        )}
+        {
+          transactions.length > 0 && (
 
-        <h3 className="text-2xl font-bold">
+            <div className="overflow-x-auto">
 
-          No Transactions
+              <table className="w-full">
 
-        </h3>
+                <thead className="sticky top-0 z-20 bg-gradient-to-r from-slate-100 via-white to-slate-100 backdrop-blur-xl border-b border-slate-200">
 
-        <p className="text-gray-500 mt-2">
+                  <tr>
 
-          Financial transactions will appear here.
+                    <th className="px-8 py-5 text-left text-[13px] uppercase tracking-[0.18em] font-black text-slate-500">
 
-        </p>
+                      Type
 
-      </div>
+                    </th>
 
-    )
-  }
+                    <th className="px-8 py-5 text-left text-[13px] uppercase tracking-[0.18em] font-black text-slate-500">
 
-  {
-    transactions.length > 0 && (
+                      Amount
 
-      <div className="overflow-x-auto">
+                    </th>
 
-        <table className="w-full">
+                    <th className="px-8 py-5 text-left text-[13px] uppercase tracking-[0.18em] font-black text-slate-500">
 
-          <thead className="sticky top-0 bg-slate-50 z-20">
+                      Account
 
-            <tr>
+                    </th>
 
-              <th className="px-8 py-5 text-left font-bold">
+                    <th className="px-8 py-5 text-left text-[13px] uppercase tracking-[0.18em] font-black text-slate-500">
 
-                Type
+                      Date
 
-              </th>
+                    </th>
 
-              <th className="px-8 py-5 text-left font-bold">
+                    <th className="px-8 py-5 text-left text-[13px] uppercase tracking-[0.18em] font-black text-slate-500">
 
-                Amount
+                      Action
 
-              </th>
+                    </th>
 
-              <th className="px-8 py-5 text-left font-bold">
+                  </tr>
 
-                Account
+                </thead>
 
-              </th>
+                <tbody>
 
-              <th className="px-8 py-5 text-left font-bold">
+                  {transactions.map((tx: any, index: number) => (
 
-                Date
+                    <motion.tr
 
-              </th>
+                      key={tx.id}
 
-              <th className="px-8 py-5 text-left font-bold">
+                      initial={{
+                        opacity: 0,
+                        y: 20
+                      }}
 
-                Action
+                      animate={{
+                        opacity: 1,
+                        y: 0
+                      }}
 
-              </th>
+                      transition={{
+                        delay: index * .04
+                      }}
 
-            </tr>
+                      className="border-b border-slate-100 transition-all duration-300 hover:bg-gradient-to-r hover:from-blue-50/60 hover:to-cyan-50/40 hover:shadow-inner"
 
-          </thead>
-
-          <tbody>
-
-            {transactions.map((tx: any, index: number) => (
-
-              <motion.tr
-
-                key={tx.id}
-
-                initial={{
-                  opacity: 0,
-                  y: 20
-                }}
-
-                animate={{
-                  opacity: 1,
-                  y: 0
-                }}
-
-                transition={{
-                  delay: index * .04
-                }}
-
-                className="border-b border-slate-100 hover:bg-blue-50/40 transition-all duration-300"
-
-              >
-
-                <td className="px-8 py-6">
-
-                  <div className="flex items-center gap-3">
-
-                    <div
-                      className={`p-2 rounded-2xl ${tx.type === "INCOME"
-                        ? "bg-green-100 text-green-600"
-                        : "bg-red-100 text-red-500"
-                        }`}
                     >
 
-                      {tx.type === "INCOME"
+                      <td className="px-8 py-6">
 
-                        ? <ArrowUpCircle size={20} />
+                        <div className="flex items-center gap-4">
 
-                        : <ArrowDownCircle size={20} />
+                          <div
+                            className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm ${tx.type === "INCOME"
+                              ? "bg-emerald-100 text-emerald-600"
+                              : "bg-rose-100 text-rose-600"
+                              }`}
+                          >
 
-                      }
+                            {tx.type === "INCOME"
 
-                    </div>
+                              ? <ArrowUpCircle size={22} />
 
-                    <span
-                      className={`font-semibold ${tx.type === "INCOME"
-                        ? "text-green-600"
-                        : "text-red-500"
-                        }`}
-                    >
+                              : <ArrowDownCircle size={22} />
 
-                      {tx.type}
+                            }
 
-                    </span>
+                          </div>
 
-                  </div>
+                          <div>
 
-                </td>
+                            <p
+                              className={`font-black ${tx.type === "INCOME"
+                                ? "text-emerald-600"
+                                : "text-rose-600"
+                                }`}
+                            >
 
-                <td className="px-8 py-6">
+                              {tx.type}
 
-                  <span className="text-xl font-black text-slate-900">
+                            </p>
 
-                    ₹{Number(tx.amount).toLocaleString()}
+                            <p className="text-xs text-slate-400">
 
-                  </span>
+                              Financial Transaction
 
-                </td>
+                            </p>
 
-                <td className="px-8 py-6 font-medium">
+                          </div>
 
-                  {tx.account?.name || "-"}
+                        </div>
 
-                </td>
+                      </td>
 
-                <td className="px-8 py-6 text-gray-500">
+                      <td className="px-8 py-6">
 
-                  {new Date(tx.createdAt).toLocaleDateString()}
+                        <div className="inline-flex rounded-2xl bg-slate-100 px-4 py-2">
 
-                </td>
+                          <span className="text-2xl font-black text-slate-900">
 
-                <td className="px-8 py-6">
+                            ₹{Number(tx.amount).toLocaleString()}
 
-                  {role === "ADMIN"
+                          </span>
+                        </div>
+                      </td>
 
-                    ? (
+                      <td className="px-8 py-6">
 
-                      <button
+                        <div>
 
-                        onClick={() => {
-                          if (confirm("Delete Transaction?")) {
-                            onDelete(tx.id);
-                          }
-                        }}
+                          <p className="font-bold text-slate-800">
 
-                        className="flex items-center gap-2 rounded-2xl bg-red-500 hover:bg-red-600 text-white px-5 py-3 transition-all duration-300 hover:scale-105"
+                            {tx.account?.name || "General Account"}
 
-                      >
+                          </p>
 
-                        <Trash2 size={17} />
+                          <p className="text-xs text-slate-400">
 
-                        Delete
+                            Ledger Account
 
-                      </button>
+                          </p>
 
-                    )
+                        </div>
 
-                    : (
+                      </td>
 
-                      <span className="text-slate-400">
+                      <td className="px-8 py-6">
 
-                        View Only
+                        <div>
 
-                      </span>
+                          <p className="font-semibold text-slate-800">
 
-                    )}
+                            {new Date(tx.createdAt).toLocaleDateString()}
 
-                </td>
+                          </p>
 
-              </motion.tr>
+                          <p className="text-xs text-slate-400">
 
-            ))}
+                            Created
 
-          </tbody>
+                          </p>
 
-        </table>
+                        </div>
 
-      </div>
+                      </td>
 
-    )
-  }
+                      <td className="px-8 py-6">
+
+                        {role === "ADMIN"
+
+                          ? (
+
+                            <button
+                              onClick={() => {
+                                if (confirm("Delete Transaction?")) {
+                                  onDelete(tx.id);
+                                }
+                              }}
+                              className="group flex items-center gap-3 rounded-2xl bg-red-50 border border-red-200 px-4 py-3 text-red-600 font-bold hover:bg-red-500 hover:text-white transition-all duration-300"
+                            >
+
+                              <Trash2
+                                size={18}
+                                className="group-hover:scale-110 transition-transform"
+                              />
+
+                              Delete
+
+                            </button>
+
+                          )
+
+                          : (
+
+                            <span className="text-slate-400">
+
+                              View Only
+
+                            </span>
+
+                          )}
+
+                      </td>
+
+                    </motion.tr>
+
+                  ))}
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+          )
+        }
 
       </div >
 

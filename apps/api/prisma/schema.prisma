@@ -8,18 +8,33 @@ generator client {
 }
 
 model Tenant {
-  id        String   @id @default(uuid())
-  name      String
+  id   String @id @default(uuid())
+  name String
+
+  companyCode String? @unique
+
+  industry String?
+
+  phone String?
+
+  email String?
+
+  address String?
+
+  logo String?
+
   createdAt DateTime @default(now())
 
-  users        User[]
-  employees    Employee[]
-  accounts     Account[]
-  transactions Transaction[]
-  inventory    Inventory[]
-  reports       Report[]
-   reportHistories ReportHistory[]
-  invoices Invoice[]
+  users            User[]
+  pendingEmployees PendingEmployee[]
+  employees        Employee[]
+  accounts         Account[]
+  payrolls         Payroll[]
+  transactions     Transaction[]
+  inventory        Inventory[]
+  reports          Report[]
+  reportHistories  ReportHistory[]
+  invoices         Invoice[]
 
   ledgers        Ledger[]
   payables       Payable[]
@@ -31,10 +46,9 @@ model Tenant {
   customers      Customer[]
   salesOrders    SalesOrder[]
   vendors        Vendor[]
-  
 
   notifications Notification[]
-  
+
   auditLogs AuditLog[]
 
   dashboardWidgets DashboardWidget[]
@@ -44,40 +58,148 @@ model Tenant {
 }
 
 model User {
-  id       String @id @default(uuid())
-  email    String @unique
+  id String @id @default(uuid())
+
+  email String @unique
+
   password String
-  role     Role
 
-  name     String?
+  role Role
 
-  phone    String?
+  name String?
 
-  avatar   String?
+  phone String?
+
+  avatar String?
+
+  companyCode String?
+
+  isApproved Boolean @default(false)
 
   isActive Boolean @default(true)
-  
-lastLogin DateTime?
+
+  lastLogin DateTime?
 
   tenantId String
-  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  employee Employee?
 
   createdAt DateTime @default(now())
+
+  updatedAt DateTime @default(now()) @updatedAt
 }
+
+model PendingEmployee {
+  id String @id @default(uuid())
+
+  name String
+
+  email String @unique
+
+  phone String?
+
+  department String?
+
+  designation String?
+
+  role Role
+
+  password String
+
+  companyCode String
+
+  employmentType String? @default("FULL_TIME")
+
+  salary Float? @default(0)
+
+  joiningDate DateTime?
+
+  tenantId String
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  status PendingEmployeeStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+}
+
 model Employee {
-  id       String @id @default(uuid())
-  name     String
-  position String
-  salary   Float
+  id String @id @default(uuid())
+
+  // Relation
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  employeeCode String @unique
+
+  name String
+
+  email String @unique
+
+  phone String?
+
+  department String?
+
+  designation String?
+
+  employmentType String @default("FULL_TIME")
+
+  managerId String?
+
+  managerName String?
+
+  salary Float @default(0)
+
+  joiningDate DateTime
+
+  status String @default("ACTIVE")
+
+  emergencyContact String?
+
+  profilePhoto String?
 
   tenantId String
   tenant   Tenant @relation(fields: [tenantId], references: [id])
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   transactions Transaction[]
   attendances  Attendance[]
   leaves       Leave[]
+  payrolls     Payroll[]
+}
+
+model Payroll {
+  id String @id @default(uuid())
+
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  month         String
+  payslipNumber String @unique
+
+  basicSalary Float
+
+  allowances Float @default(0)
+
+  deductions Float @default(0)
+
+  grossSalary Float
+
+  netSalary Float
+
+  status  String  @default("GENERATED")
+  remarks String?
+
+  generatedAt DateTime @default(now())
 }
 
 model Attendance {
@@ -86,6 +208,14 @@ model Attendance {
   date DateTime
 
   status String
+
+  checkIn DateTime?
+
+  checkOut DateTime?
+
+  workingHours Float?
+
+  remarks String?
 
   employeeId String
 
@@ -96,6 +226,8 @@ model Attendance {
   tenant Tenant @relation(fields: [tenantId], references: [id])
 
   createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
 }
 
 model Leave {
@@ -300,160 +432,150 @@ model SalesOrder {
 }
 
 model DashboardWidget {
+  id String @id @default(uuid())
 
-  id          String   @id @default(uuid())
+  title String
 
-  title       String
+  type String
 
-  type        String
+  config Json
 
-  config      Json
+  position Int
 
-  position    Int
+  tenantId String
 
-  tenantId    String
+  tenant Tenant @relation(fields: [tenantId], references: [id])
 
-  tenant      Tenant @relation(fields: [tenantId], references: [id])
-
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model Notification {
+  id String @id @default(uuid())
 
-  id          String   @id @default(uuid())
+  title String
 
-  title       String
+  message String
 
-  message     String
+  type String
 
-  type        String
+  isRead Boolean @default(false)
 
-  isRead      Boolean  @default(false)
+  tenantId String
 
-  tenantId    String
+  tenant Tenant @relation(fields: [tenantId], references: [id])
 
-  tenant      Tenant @relation(fields: [tenantId], references: [id])
-
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model AuditLog {
+  id String @id @default(uuid())
 
-  id          String   @id @default(uuid())
+  action String
 
-  action      String
-
-  module      String
+  module String
 
   description String
 
-  userEmail   String
+  userEmail String
 
-  tenantId    String
+  tenantId String
 
-  tenant      Tenant @relation(fields: [tenantId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id])
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model Project {
+  id String @id @default(uuid())
 
-  id           String   @id @default(uuid())
+  name String
 
-  name         String
+  description String?
 
-  description  String?
+  budget Float @default(0)
 
-  budget       Float    @default(0)
+  status String @default("ACTIVE")
 
-  status       String   @default("ACTIVE")
+  tenantId String
 
-  tenantId     String
+  tenant Tenant @relation(fields: [tenantId], references: [id])
 
-  tenant       Tenant @relation(fields: [tenantId], references: [id])
+  tasks Task[]
 
-  tasks        Task[]
-
-  createdAt    DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model Task {
+  id String @id @default(uuid())
 
-  id           String   @id @default(uuid())
+  title String
 
-  title        String
+  description String?
 
-  description  String?
+  status String @default("PENDING")
 
-  status       String   @default("PENDING")
+  assignedTo String?
 
-  assignedTo   String?
+  deadline DateTime?
 
-  deadline     DateTime?
+  projectId String
 
-  projectId    String
+  project Project @relation(fields: [projectId], references: [id])
 
-  project      Project @relation(fields: [projectId], references: [id])
+  tenantId String
 
-  tenantId     String
+  tenant Tenant @relation(fields: [tenantId], references: [id])
 
-  tenant       Tenant @relation(fields: [tenantId], references: [id])
-
-  createdAt    DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model Report {
+  id String @id @default(uuid())
 
-  id           String   @id @default(uuid())
+  name String
 
-  name         String
+  type String
 
-  type         String
+  frequency String
 
-  frequency    String
+  status String @default("SCHEDULED")
 
-  status       String   @default("SCHEDULED")
+  email String
 
-  email        String
+  lastRun DateTime?
 
-  lastRun      DateTime?
+  nextRun DateTime?
 
-  nextRun      DateTime?
+  tenantId String
 
-  tenantId     String
+  tenant Tenant @relation(fields: [tenantId], references: [id])
 
-  tenant       Tenant @relation(fields: [tenantId], references: [id])
-
-  createdAt    DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model Vendor {
+  id String @id @default(uuid())
 
-  id           String   @id @default(uuid())
+  name String
 
-  name         String
+  email String?
 
-  email        String?
+  phone String?
 
-  phone        String?
+  address String?
 
-  address      String?
+  company String?
 
-  company      String?
+  status String @default("ACTIVE")
 
-  status       String   @default("ACTIVE")
+  tenantId String
 
-  tenantId     String
+  tenant Tenant @relation(fields: [tenantId], references: [id])
 
-  tenant  Tenant  @relation(fields: [tenantId],references: [id])
-
-  createdAt    DateTime @default(now())
-
-  
+  createdAt DateTime @default(now())
 }
 
 model ReportHistory {
-
   id String @id @default(uuid())
 
   reportName String
@@ -466,11 +588,10 @@ model ReportHistory {
 
   tenantId String
 
-  tenant Tenant @relation(fields: [tenantId],references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id])
 }
 
 model Invoice {
-
   id String @id @default(uuid())
 
   invoiceNumber String @unique
@@ -485,7 +606,7 @@ model Invoice {
 
   tenantId String
 
-  tenant Tenant@relation(fields: [tenantId],references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id])
 
   createdAt DateTime @default(now())
 }
@@ -497,4 +618,10 @@ enum Role {
   FINANCE
   SALES
   EMPLOYEE
+}
+
+enum PendingEmployeeStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }

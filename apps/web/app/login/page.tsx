@@ -129,6 +129,11 @@ export default function LoginPage() {
       );
 
       localStorage.setItem(
+        "token",
+        payload.access_token
+      );
+
+      localStorage.setItem(
         "userId",
         payload.user.id
       );
@@ -142,6 +147,21 @@ export default function LoginPage() {
         "tenantId",
         payload.user.tenantId
       );
+
+      localStorage.setItem(
+        "name",
+        payload.user.name || ""
+      );
+
+      // NEW
+      if (payload.user.employeeId) {
+
+        localStorage.setItem(
+          "employeeId",
+          payload.user.employeeId
+        );
+
+      }
       toast.success(
         "Login Success ✅"
       );
@@ -357,12 +377,37 @@ export default function LoginPage() {
 
           </motion.button>
 
-          {/* FOOTER */}
-          <div className="mt-7 flex items-center justify-center gap-2 text-white/70 text-sm">
+          {/* ACTION LINKS */}
 
-            <ShieldCheck size={16} />
+          <div className="mt-7 space-y-4">
 
-            Secure Enterprise Access
+            <div className="flex justify-center gap-6 text-sm">
+
+              <button
+                type="button"
+                onClick={() => router.push("/register/company")}
+                className="text-cyan-300 hover:text-cyan-200 transition"
+              >
+                Create Company
+              </button>
+
+              <button
+                type="button"
+                onClick={() => router.push("/register/employee")}
+                className="text-purple-300 hover:text-purple-200 transition"
+              >
+                Join Company
+              </button>
+
+            </div>
+
+            <div className="flex items-center justify-center gap-2 text-white/70 text-sm">
+
+              <ShieldCheck size={16} />
+
+              Secure Enterprise Access
+
+            </div>
 
           </div>
 

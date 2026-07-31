@@ -17,7 +17,7 @@ export const ROLE_ACCESS: Record<string, string[]> = {
     "/forecasting",
   ],
 
-  MANAGER: [
+MANAGER: [
   "/",
   "/profile",
   "/projects",
@@ -26,6 +26,7 @@ export const ROLE_ACCESS: Record<string, string[]> = {
   "/notifications",
   "/vendors",
   "/employees",
+  "/hr",
 ],
 
   HR: [
@@ -58,6 +59,7 @@ export const ROLE_ACCESS: Record<string, string[]> = {
     "/profile",
     "/projects",
     "/notifications",
+    
   ],
 };
 export function canAccess(

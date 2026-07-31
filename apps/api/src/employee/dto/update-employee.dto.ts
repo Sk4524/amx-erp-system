@@ -1,11 +1,10 @@
 import {
+  IsEmail,
+  IsNumber,
   IsOptional,
   IsString,
-  IsNumber,
   Min,
 } from "class-validator";
-
-import { Type } from "class-transformer";
 
 export class UpdateEmployeeDto {
   @IsOptional()
@@ -13,11 +12,29 @@ export class UpdateEmployeeDto {
   name?: string;
 
   @IsOptional()
-  @IsString()
-  position?: string;
+  @IsEmail()
+  email?: string;
 
   @IsOptional()
-  @Type(() => Number)
+  @IsString()
+  phone?: string;
+
+  @IsOptional()
+  @IsString()
+  department?: string;
+
+  @IsOptional()
+  @IsString()
+  designation?: string;
+
+  @IsOptional()
+  @IsString()
+  employmentType?: string;
+
+  @IsOptional()
+  joiningDate?: Date;
+
+  @IsOptional()
   @IsNumber()
   @Min(0)
   salary?: number;

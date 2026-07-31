@@ -24,9 +24,10 @@ import api from "../../lib/api";
 export default function UsersPage() {
 
   const [users, setUsers] = useState<any[]>([]);
+  const [pendingUsers, setPendingUsers] = useState<any[]>([]);
   useEffect(() => {
-  console.log("USERS STATE =", users);
-}, [users]);
+    console.log("USERS STATE =", users);
+  }, [users]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -55,45 +56,65 @@ export default function UsersPage() {
 
 
   const fetchUsers = async () => {
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const res = await api.get("/users");
+      const res = await api.get("/users");
 
-    console.log(res.data);
+      console.log(res.data);
 
-  const usersData =
-  res.data.data?.data ??
-  res.data.data ??
-  [];
+      const usersData =
+        res.data.data?.data ??
+        res.data.data ??
+        [];
 
-setUsers(
-  Array.isArray(usersData)
-    ? usersData
-    : []
-);
+      setUsers(
+        Array.isArray(usersData)
+          ? usersData
+          : []
+      );
 
-  } catch {
+    } catch {
 
-    toast.error("Failed to load users");
-    setUsers([]);
+      toast.error("Failed to load users");
+      setUsers([]);
 
-  } finally {
+    } finally {
 
-    setLoading(false);
+      setLoading(false);
 
-  }
-};
+    }
+  };
 
+  const fetchPendingUsers = async () => {
+    try {
+      const res = await api.get("/users/pending");
 
+      setPendingUsers(
+        Array.isArray(res.data.data)
+          ? res.data.data
+          : []
+      );
+
+    } catch (err) {
+
+      console.log(err);
+
+      setPendingUsers([]);
+
+    }
+  };
   useEffect(() => {
 
     if (currentRole === "ADMIN") {
+
       fetchUsers();
+
+      fetchPendingUsers();
+
     }
 
   }, [currentRole]);
-
 
   const createUser = async () => {
 
@@ -236,7 +257,49 @@ setUsers(
       );
     }
   };
+  const approveUser = async (id: string) => {
 
+    try {
+
+      await api.put(`/users/${id}/approve`);
+
+      toast.success("Employee Approved");
+
+      fetchPendingUsers();
+
+      fetchUsers();
+
+    } catch (err: any) {
+
+      toast.error(
+        err?.response?.data?.message ||
+        "Approval failed"
+      );
+
+    }
+
+  };
+
+  const rejectUser = async (id: string) => {
+
+    try {
+
+      await api.put(`/users/${id}/reject`);
+
+      toast.success("Employee Rejected");
+
+      fetchPendingUsers();
+
+    } catch (err: any) {
+
+      toast.error(
+        err?.response?.data?.message ||
+        "Reject failed"
+      );
+
+    }
+
+  };
   const totalUsers = users.length;
 
   const activeUsers = users.filter(
@@ -252,22 +315,22 @@ setUsers(
   ).length;
 
   const filteredUsers =
-  users.filter((user: any) =>
+    users.filter((user: any) =>
 
-    (user.email || "")
-      .toLowerCase()
-      .includes(
-        search.toLowerCase()
-      )
+      (user.email || "")
+        .toLowerCase()
+        .includes(
+          search.toLowerCase()
+        )
 
-    ||
+      ||
 
-    (user.role || "")
-      .toLowerCase()
-      .includes(
-        search.toLowerCase()
-      )
-  );
+      (user.role || "")
+        .toLowerCase()
+        .includes(
+          search.toLowerCase()
+        )
+    );
 
 
   if (
@@ -481,7 +544,128 @@ setUsers(
             </motion.div>
 
           </div>
+          {/* PENDING EMPLOYEE REQUESTS */}
 
+          {currentRole === "ADMIN" && pendingUsers.length > 0 && (
+
+            <div className="relative overflow-hidden bg-white/80 backdrop-blur-md p-7 rounded-[32px] shadow-xl border border-white/40 mb-10">
+
+              <h2 className="text-3xl font-black text-orange-600 mb-6">
+
+                Pending Employee Registrations
+
+              </h2>
+
+              <div className="space-y-5">
+
+                {pendingUsers.map((user: any) => (
+
+                  <div
+                    key={user.id}
+                    className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 border border-orange-100 rounded-2xl p-5 bg-orange-50/40"
+                  >
+
+                    <div>
+
+                      <h3 className="text-xl font-bold">
+
+                        {user.name}
+
+                      </h3>
+
+                      <p className="text-gray-600">
+
+                        {user.email}
+
+                      </p>
+
+                      <div className="flex flex-wrap gap-3 mt-3">
+
+                        <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">
+
+                          {user.role}
+
+                        </span>
+
+                        {user.department && (
+
+                          <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">
+
+                            {user.department}
+
+                          </span>
+
+                        )}
+
+                        {user.designation && (
+
+                          <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-bold">
+
+                            {user.designation}
+
+                          </span>
+
+                        )}
+
+                      </div>
+
+                    </div>
+
+                    <div className="flex gap-3">
+
+                      <button
+                        onClick={() => {
+
+                          if (
+                            window.confirm(
+                              `Approve ${user.name}?`
+                            )
+                          ) {
+
+                            approveUser(user.id);
+
+                          }
+
+                        }}
+                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-2xl font-semibold transition-all"
+                      >
+
+                        Approve
+
+                      </button>
+
+                      <button
+                        onClick={() => {
+
+                          if (
+                            window.confirm(
+                              `Reject ${user.name}?`
+                            )
+                          ) {
+
+                            rejectUser(user.id);
+
+                          }
+
+                        }}
+                        className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-2xl font-semibold transition-all"
+                      >
+
+                        Reject
+
+                      </button>
+
+                    </div>
+
+                  </div>
+
+                ))}
+
+              </div>
+
+            </div>
+
+          )}
           {/* CREATE USER */}
           {currentRole === "ADMIN" && (
             <div className="relative overflow-hidden bg-white/80 backdrop-blur-md p-7 rounded-[32px] shadow-xl border border-white/40 mb-10">

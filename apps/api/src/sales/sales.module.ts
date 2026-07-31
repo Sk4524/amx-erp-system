@@ -1,5 +1,9 @@
 import { Module }
 from "@nestjs/common";
+import { InvoicesModule }
+from "../invoices/invoices.module";
+import { FinanceModule }
+from "../finance/finance.module";
 
 import { SalesController }
 from "./sales.controller";
@@ -19,16 +23,21 @@ import { AuditModule }
 from "../audit/audit.module";
 
 @Module({
+imports: [
 
-  imports: [
+  PrismaModule,
 
-    PrismaModule,
+  RedisModule,
 
-    RedisModule,
+  RealtimeModule,
 
-    RealtimeModule,
-    AuditModule
-  ],
+  AuditModule,
+
+  FinanceModule,
+
+  InvoicesModule,
+
+],
 
   controllers: [
 

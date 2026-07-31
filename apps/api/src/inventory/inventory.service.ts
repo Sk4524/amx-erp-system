@@ -761,4 +761,350 @@ return {
 
 };
 }
+async getInventorySummary(
+  tenantId: string,
+) {
+
+  const [
+    totalProducts,
+    inventory,
+    lowStock,
+    outOfStock,
+  ] = await Promise.all([
+
+    this.prisma.inventory.count({
+      where: {
+        tenantId,
+      },
+    }),
+
+    this.prisma.inventory.findMany({
+      where: {
+        tenantId,
+      },
+      select: {
+        quantity: true,
+        price: true,
+      },
+    }),
+
+    this.prisma.inventory.count({
+      where: {
+        tenantId,
+        quantity: {
+          gt: 0,
+          lte: 5,
+        },
+      },
+    }),
+
+    this.prisma.inventory.count({
+      where: {
+        tenantId,
+        quantity: 0,
+      },
+    }),
+
+  ]);
+
+  const totalStock =
+    inventory.reduce(
+      (sum, item) => sum + item.quantity,
+      0,
+    );
+
+  const inventoryValue =
+    inventory.reduce(
+      (sum, item) => sum + item.quantity * item.price,
+      0,
+    );
+
+  return {
+
+    success: true,
+
+    data: {
+
+      totalProducts,
+
+      totalStock,
+
+      inventoryValue,
+
+      lowStockItems: lowStock,
+
+      outOfStockItems: outOfStock,
+
+    },
+
+  };
+
+}
+
+async getLowStockItems(
+  tenantId: string,
+) {
+
+  const items =
+    await this.prisma.inventory.findMany({
+
+      where: {
+
+        tenantId,
+
+        quantity: {
+
+          gt: 0,
+
+          lte: 5,
+
+        },
+
+      },
+
+      orderBy: {
+
+        quantity: "asc",
+
+      },
+
+    });
+
+  return {
+
+    success: true,
+
+    data: items,
+
+  };
+
+}
+
+async getOutOfStockItems(
+  tenantId: string,
+) {
+
+  const items =
+    await this.prisma.inventory.findMany({
+
+      where: {
+
+        tenantId,
+
+        quantity: 0,
+
+      },
+
+      orderBy: {
+
+        productName: "asc",
+
+      },
+
+    });
+
+  return {
+
+    success: true,
+
+    data: items,
+
+  };
+
+}
+
+async getInventoryValuation(
+  tenantId: string,
+) {
+
+  const items =
+    await this.prisma.inventory.findMany({
+
+      where: {
+        tenantId,
+      },
+
+      orderBy: {
+        productName: "asc",
+      },
+
+    });
+
+  const valuation =
+    items.map(item => ({
+
+      id: item.id,
+
+      productName: item.productName,
+
+      sku: item.sku,
+
+      quantity: item.quantity,
+
+      price: item.price,
+
+      totalValue:
+        item.quantity * item.price,
+
+    }));
+
+  const grandTotal =
+    valuation.reduce(
+
+      (sum, item) =>
+        sum + item.totalValue,
+
+      0,
+
+    );
+
+  return {
+
+    success: true,
+
+    data: {
+
+      items: valuation,
+
+      totalInventoryValue:
+        grandTotal,
+
+    },
+
+  };
+
+}
+
+async getCategoryAnalytics(
+  tenantId: string,
+) {
+
+  const items =
+    await this.prisma.inventory.findMany({
+
+      where: {
+        tenantId,
+      },
+
+      select: {
+        category: true,
+        quantity: true,
+        price: true,
+      },
+
+    });
+
+  const analytics: Record<
+    string,
+    {
+      items: number;
+      quantity: number;
+      value: number;
+    }
+  > = {};
+
+  for (const item of items) {
+
+    if (!analytics[item.category]) {
+
+      analytics[item.category] = {
+
+        items: 0,
+
+        quantity: 0,
+
+        value: 0,
+
+      };
+
+    }
+
+    analytics[item.category].items++;
+
+    analytics[item.category].quantity +=
+      item.quantity;
+
+    analytics[item.category].value +=
+      item.quantity * item.price;
+
+  }
+
+  return {
+
+    success: true,
+
+    data: Object.entries(analytics).map(
+
+      ([category, value]) => ({
+
+        category,
+
+        ...value,
+
+      }),
+
+    ),
+
+  };
+
+}
+
+async getMonthlyInventoryAnalytics(
+  tenantId: string,
+) {
+
+  const items =
+    await this.prisma.inventory.findMany({
+
+      where: {
+        tenantId,
+      },
+
+      orderBy: {
+        createdAt: "asc",
+      },
+
+    });
+
+  const monthly: Record<
+    string,
+    number
+  > = {};
+
+  for (const item of items) {
+
+    const month =
+      item.createdAt.toLocaleString(
+        "en-US",
+        {
+          month: "short",
+          year: "numeric",
+        },
+      );
+
+    monthly[month] =
+      (monthly[month] || 0) + 1;
+
+  }
+
+  return {
+
+    success: true,
+
+    data: Object.entries(monthly).map(
+
+      ([month, total]) => ({
+
+        month,
+
+        totalProducts: total,
+
+      }),
+
+    ),
+
+  };
+
+}
+
 }

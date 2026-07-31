@@ -16,17 +16,26 @@ from "../realtime/realtime.module";
 
     AuditModule,
 
-    RealtimeModule
+    RealtimeModule,
+
   ],
 
   providers: [
 
-    FinanceService
+    FinanceService,
+
   ],
 
   controllers: [
 
-    FinanceController
+    FinanceController,
+
+  ],
+
+  exports: [
+
+    FinanceService,
+
   ],
 
 })

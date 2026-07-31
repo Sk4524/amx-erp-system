@@ -4,7 +4,7 @@ import {
     getConversation,
     saveConversation,
 } from "./ConversationMemory";
-
+import { AIResponse } from "../types/AIResponse";
 import { runAI } from "../engine/AIEngine";
 
 export async function runCopilot(
@@ -23,7 +23,7 @@ export async function runCopilot(
 
     ) => Promise<string | null>
 
-) {
+): Promise<AIResponse> {
 
     // 1. Greeting
     const greeting =
@@ -31,27 +31,35 @@ export async function runCopilot(
 
     if (greeting) {
 
-        return {
+      return {
 
-            intent: "greeting",
+    intent: "general",
 
-            reply: greeting,
+    reply: greeting,
 
-            suggestions: [
+    suggestions: [
 
-                "Business Summary",
+        "Business Summary",
 
-                "Revenue Analysis",
+        "Revenue Analysis",
 
-                "Inventory Status",
+        "Inventory Status",
 
-                "Forecast Next Month",
+        "Forecast Next Month",
 
-                "HR Insights",
+        "HR Insights",
 
-            ],
+    ],
 
-        };
+    confidence: 1,
+
+    metadata: {
+
+        source: "GreetingEngine",
+
+    },
+
+};
 
     }
 
@@ -113,28 +121,34 @@ ${question}`;
     );
 
     // 5. Return
-    return {
+   return {
 
-        intent:
-            ai.intent,
+    intent: ai.intent,
 
-        reply:
-            ai.response,
+    reply: ai.response,
 
-        suggestions: [
+    suggestions: [
 
-            "Business Summary",
+        "Business Summary",
 
-            "Revenue Analysis",
+        "Revenue Analysis",
 
-            "Inventory Health",
+        "Inventory Health",
 
-            "Forecast Sales",
+        "Forecast Sales",
 
-            "Generate Report",
+        "Generate Report",
 
-        ],
+    ],
 
-    };
+    confidence: 0.95,
+
+    metadata: {
+
+        source: "Copilot",
+
+    },
+
+};
 
 }

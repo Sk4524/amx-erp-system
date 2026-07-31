@@ -46,6 +46,30 @@ export default function ProfilePage() {
     setPasswordLoading] =
     useState(false);
 
+  const [attendance, setAttendance] =
+    useState<any[]>([]);
+
+  const [leaves, setLeaves] =
+    useState<any[]>([]);
+
+  const [reason, setReason] =
+    useState("");
+
+  const [startDate, setStartDate] =
+    useState("");
+
+  const [endDate, setEndDate] =
+    useState("");
+
+  const [checkingIn, setCheckingIn] =
+    useState(false);
+
+  const [checkingOut, setCheckingOut] =
+    useState(false);
+
+  const [leaveLoading, setLeaveLoading] =
+    useState(false);
+
   const fetchProfile = async () => {
 
     try {
@@ -77,10 +101,193 @@ export default function ProfilePage() {
       );
     }
   };
+  const fetchAttendance = async () => {
+
+    try {
+
+      const res =
+        await api.get("/hr/attendance/me");
+
+      setAttendance(
+        res.data.data || []
+      );
+
+    } catch (err) {
+
+      console.log(err);
+
+    }
+
+  };
+
+  const fetchLeaves = async () => {
+
+    try {
+
+      const res =
+        await api.get("/hr/my-leaves");
+
+      setLeaves(
+        res.data.data || []
+      );
+
+    } catch (err) {
+
+      console.log(err);
+
+    }
+
+  };
+
+  const checkIn = async () => {
+
+    try {
+
+      setCheckingIn(true);
+
+      await api.post(
+        "/hr/attendance/checkin",
+        {
+          employeeId:
+            localStorage.getItem("employeeId"),
+        }
+      );
+
+      toast.success(
+        "Checked In Successfully"
+      );
+
+      fetchAttendance();
+
+    } catch (err: any) {
+
+      toast.error(
+        err?.response?.data?.message ||
+        "Check In Failed"
+      );
+
+    } finally {
+
+      setCheckingIn(false);
+
+    }
+
+  };
+
+  const checkOut = async () => {
+
+    try {
+
+      setCheckingOut(true);
+
+      await api.put(
+        "/hr/attendance/checkout",
+        {
+          employeeId:
+            localStorage.getItem("employeeId"),
+        }
+      );
+
+      toast.success(
+        "Checked Out Successfully"
+      );
+
+      fetchAttendance();
+
+    } catch (err: any) {
+
+      toast.error(
+        err?.response?.data?.message ||
+        "Check Out Failed"
+      );
+
+    } finally {
+
+      setCheckingOut(false);
+
+    }
+
+  };
+
+  const applyLeave = async () => {
+
+    if (!reason.trim()) {
+
+      toast.error("Reason is required");
+
+      return;
+
+    }
+
+    if (!startDate || !endDate) {
+
+      toast.error("Select leave dates");
+
+      return;
+
+    }
+
+    try {
+
+      setLeaveLoading(true);
+
+      await api.post(
+        "/hr/leave",
+        {
+
+          reason,
+
+          startDate,
+
+          endDate,
+
+        }
+      );
+
+      toast.success(
+        "Leave Applied Successfully"
+      );
+
+      setReason("");
+
+      setStartDate("");
+
+      setEndDate("");
+
+      fetchLeaves();
+
+    } catch (err: any) {
+
+      toast.error(
+
+        err?.response?.data?.message ||
+
+        "Leave Apply Failed"
+
+      );
+
+    } finally {
+
+      setLeaveLoading(false);
+
+    }
+
+  };
 
   useEffect(() => {
 
     fetchProfile();
+
+    if (
+      localStorage.getItem("role") ===
+      "EMPLOYEE"
+    ) {
+
+      fetchAttendance();
+
+      fetchLeaves();
+
+    }
 
   }, []);
 
@@ -638,6 +845,375 @@ export default function ProfilePage() {
             </button>
 
           </div>
+
+          {
+            profile.role === "EMPLOYEE" && (
+
+              <>
+
+                {/* EMPLOYEE SELF SERVICE */}
+
+                <div className="bg-white/80 backdrop-blur-md p-7 rounded-[32px] shadow-xl border border-white/40 mb-10">
+
+                  <h2 className="text-3xl font-black mb-6">
+
+                    Employee Self Service
+
+                  </h2>
+
+                  <div className="flex gap-4 flex-wrap">
+
+                    <button
+
+                      disabled={checkingIn}
+
+                      onClick={checkIn}
+
+                      className="bg-gradient-to-r from-green-600 to-emerald-500 text-white px-6 py-3 rounded-2xl font-semibold"
+
+                    >
+
+                      {
+
+                        checkingIn
+
+                          ? "Checking In..."
+
+                          : "Check In"
+
+                      }
+
+                    </button>
+
+                    <button
+
+                      disabled={checkingOut}
+
+                      onClick={checkOut}
+
+                      className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-2xl font-semibold"
+
+                    >
+
+                      {
+
+                        checkingOut
+
+                          ? "Checking Out..."
+
+                          : "Check Out"
+
+                      }
+
+                    </button>
+
+                  </div>
+
+                </div>
+
+                {/* APPLY LEAVE */}
+
+                <div className="bg-white/80 backdrop-blur-md p-7 rounded-[32px] shadow-xl border border-white/40 mb-10">
+
+                  <h2 className="text-2xl font-bold mb-6">
+
+                    Apply Leave
+
+                  </h2>
+
+                  <div className="grid md:grid-cols-3 gap-4">
+
+                    <input
+
+                      placeholder="Reason"
+
+                      value={reason}
+
+                      onChange={(e) =>
+                        setReason(e.target.value)
+                      }
+
+                      className="p-4 rounded-2xl border"
+
+                    />
+
+                    <input
+
+                      type="date"
+
+                      value={startDate}
+
+                      onChange={(e) =>
+                        setStartDate(e.target.value)
+                      }
+
+                      className="p-4 rounded-2xl border"
+
+                    />
+
+                    <input
+
+                      type="date"
+
+                      value={endDate}
+
+                      onChange={(e) =>
+                        setEndDate(e.target.value)
+                      }
+
+                      className="p-4 rounded-2xl border"
+
+                    />
+
+                  </div>
+
+                  <button
+
+                    disabled={leaveLoading}
+
+                    onClick={applyLeave}
+
+                    className="mt-6 bg-blue-600 text-white px-6 py-3 rounded-2xl"
+
+                  >
+
+                    {
+
+                      leaveLoading
+
+                        ? "Applying..."
+
+                        : "Apply Leave"
+
+                    }
+
+                  </button>
+
+                </div>
+
+
+                {/* ATTENDANCE HISTORY */}
+
+                <div className="bg-white/80 backdrop-blur-md p-7 rounded-[32px] shadow-xl border border-white/40 mb-10">
+
+                  <h2 className="text-2xl font-bold mb-6">
+
+                    My Attendance
+
+                  </h2>
+
+                  <div className="overflow-x-auto">
+
+                    <table className="w-full">
+
+                      <thead>
+
+                        <tr className="border-b">
+
+                          <th className="text-left py-3">Date</th>
+
+                          <th className="text-left py-3">Check In</th>
+
+                          <th className="text-left py-3">Check Out</th>
+
+                          <th className="text-left py-3">Hours</th>
+
+                          <th className="text-left py-3">Status</th>
+
+                        </tr>
+
+                      </thead>
+
+                      <tbody>
+
+                        {attendance.length === 0 ? (
+
+                          <tr>
+
+                            <td
+                              colSpan={5}
+                              className="py-8 text-center text-gray-500"
+                            >
+
+                              No attendance found.
+
+                            </td>
+
+                          </tr>
+
+                        ) : (
+
+                          attendance.map((item: any) => (
+
+                            <tr
+                              key={item.id}
+                              className="border-b"
+                            >
+
+                              <td className="py-3">
+
+                                {new Date(item.date).toLocaleDateString()}
+
+                              </td>
+
+                              <td>
+
+                                {item.checkIn
+                                  ? new Date(item.checkIn).toLocaleTimeString()
+                                  : "-"}
+
+                              </td>
+
+                              <td>
+
+                                {item.checkOut
+                                  ? new Date(item.checkOut).toLocaleTimeString()
+                                  : "-"}
+
+                              </td>
+
+                              <td>
+
+                                {item.workingHours ?? "-"}
+
+                              </td>
+
+                              <td>
+
+                                {item.status}
+
+                              </td>
+
+                            </tr>
+
+                          ))
+
+                        )}
+
+                      </tbody>
+
+                    </table>
+
+                  </div>
+
+                </div>
+                {/* MY LEAVES */}
+
+                <div className="bg-white/80 backdrop-blur-md p-7 rounded-[32px] shadow-xl border border-white/40 mb-10">
+
+                  <h2 className="text-2xl font-bold mb-6">
+
+                    My Leave Requests
+
+                  </h2>
+
+                  <div className="overflow-x-auto">
+
+                    <table className="w-full">
+
+                      <thead>
+
+                        <tr className="border-b">
+
+                          <th className="text-left py-3">
+
+                            Reason
+
+                          </th>
+
+                          <th className="text-left py-3">
+
+                            From
+
+                          </th>
+
+                          <th className="text-left py-3">
+
+                            To
+
+                          </th>
+
+                          <th className="text-left py-3">
+
+                            Status
+
+                          </th>
+
+                        </tr>
+
+                      </thead>
+
+                      <tbody>
+
+                        {leaves.length === 0 ? (
+
+                          <tr>
+
+                            <td
+                              colSpan={4}
+                              className="py-8 text-center text-gray-500"
+                            >
+
+                              No leave requests found.
+
+                            </td>
+
+                          </tr>
+
+                        ) : (
+
+                          leaves.map((leave: any) => (
+
+                            <tr
+                              key={leave.id}
+                              className="border-b"
+                            >
+
+                              <td className="py-3">
+
+                                {leave.reason}
+
+                              </td>
+
+                              <td>
+
+                                {new Date(leave.startDate).toLocaleDateString()}
+
+                              </td>
+
+                              <td>
+
+                                {new Date(leave.endDate).toLocaleDateString()}
+
+                              </td>
+
+                              <td>
+
+                                <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm">
+
+                                  {leave.status}
+
+                                </span>
+
+                              </td>
+
+                            </tr>
+
+                          ))
+
+                        )}
+
+                      </tbody>
+
+                    </table>
+
+                  </div>
+
+                </div>
+              </>
+            )
+          }
+
 
           {/* PASSWORD */}
 

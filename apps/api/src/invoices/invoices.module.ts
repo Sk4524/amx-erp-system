@@ -20,14 +20,26 @@ from "../audit/audit.module";
     PrismaModule,
 
     AuditModule,
+
   ],
 
   controllers: [
-    InvoicesController
+
+    InvoicesController,
+
   ],
 
   providers: [
-    InvoicesService
+
+    InvoicesService,
+
   ],
+
+  exports: [
+
+    InvoicesService,
+
+  ],
+
 })
 export class InvoicesModule {}

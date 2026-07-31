@@ -58,6 +58,203 @@ async getAllUsers(
   };
 
 }
+
+// GET PENDING USERS
+async getPendingUsers(tenantId: string,) {
+  console.log("Tenant from JWT:", tenantId);
+  const users = await this.prisma.pendingEmployee.findMany({
+  where: {
+    tenantId,
+    status: "PENDING",
+  },
+  orderBy: {
+    createdAt: "desc",
+  },
+  select: {
+    id: true,
+    name: true,
+    email: true,
+    role: true,
+    companyCode: true,
+    department: true,
+    designation: true,
+    createdAt: true,
+  },
+});
+
+return {
+  success: true,
+  data: users,
+};
+}
+
+// APPROVE USER
+async approveUser(
+  id: string,
+  tenantId: string,
+) {
+  const pending =
+  await this.prisma.pendingEmployee.findFirst({
+
+    where: {
+      id,
+      tenantId,
+    },
+
+  });
+
+if (!pending) {
+
+  throw new BadRequestException(
+    "Pending employee not found"
+  );
+
+}
+
+// Create User
+
+const user = await this.prisma.user.create({
+
+  data: {
+
+    email: pending.email,
+
+    password: pending.password,
+
+    role: pending.role,
+
+    name: pending.name,
+
+    phone: pending.phone,
+
+    companyCode: pending.companyCode,
+
+    tenantId,
+
+    isApproved: true,
+
+    isActive: true,
+
+  },
+
+});
+
+// Generate Employee Code
+
+const employeeCount =
+  await this.prisma.employee.count({
+
+    where: {
+      tenantId,
+    },
+
+  });
+
+const employeeCode =
+  `EMP${String(employeeCount + 1).padStart(6, "0")}`;
+
+// Create Employee Profile
+
+await this.prisma.employee.create({
+
+  data: {
+
+    userId: user.id,
+
+    employeeCode,
+
+    name: pending.name,
+
+    email: pending.email,
+
+    phone: pending.phone,
+
+    department: pending.department,
+
+    designation: pending.designation,
+
+    joiningDate: new Date(),
+
+    salary: 0,
+
+    tenantId,
+
+  },
+
+});
+
+// Delete Pending Request
+
+await this.prisma.pendingEmployee.delete({
+
+  where: {
+    id: pending.id,
+  },
+
+});
+
+  await this.prisma.auditLog.create({
+    data: {
+      action: "USER_APPROVED",
+      module: "HR",
+      description: `${user.email} approved`,
+userEmail: user.email,
+      
+      tenantId,
+    },
+  });
+
+  return {
+    success: true,
+    message: "Employee approved successfully.",
+  };
+}
+
+// REJECT USER
+async rejectUser(
+  id: string,
+  tenantId: string,
+) {
+  const pending =
+  await this.prisma.pendingEmployee.findFirst({
+
+    where: {
+      id,
+      tenantId,
+    },
+
+  });
+
+if (!pending) {
+
+  throw new BadRequestException(
+    "Pending employee not found"
+  );
+
+}
+
+  await this.prisma.auditLog.create({
+    data: {
+      action: "USER_REJECTED",
+      module: "HR",
+     description: `${pending.email} rejected`,
+      userEmail: pending.email,
+      tenantId,
+    },
+  });
+
+ await this.prisma.pendingEmployee.delete({
+    where: {
+      id,
+    },
+  });
+
+  return {
+    success: true,
+    message: "Employee registration rejected.",
+  };
+}
+
   // CREATE USER
  async createUser(
   data: CreateUserDto,
@@ -138,23 +335,52 @@ if (
     const user =
       await this.prisma.user.create({
 
-        data: {
+      data: {
 
-          email:
-data.email,
+  email: data.email,
 
-          password:
-            hashedPassword,
+  password: hashedPassword,
 
-          role:
-            data.role as Role,
+  role: data.role as Role,
 
-          tenantId,
+  tenantId,
 
-          isActive: true,
-        },
+  name: null,
+
+  phone: null,
+
+  companyCode: null,
+
+  isApproved: true,
+
+  isActive: true,
+
+}
       });
+const employeeCode =
+  `EMP${Date.now()}`;
 
+await this.prisma.employee.create({
+
+  data: {
+
+    userId: user.id,
+
+    employeeCode,
+
+    name: user.name || user.email,
+
+    email: user.email,
+
+    joiningDate: new Date(),
+
+    salary: 0,
+
+    tenantId,
+
+  },
+
+});
     // AUDIT LOG
    await this.prisma.auditLog.create({
 

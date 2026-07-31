@@ -12,7 +12,7 @@ import {
 } from "@nestjs/common";
 
 import { EmployeeService } from "./employee.service";
-
+import { PendingEmployeeService } from "./services/pending-employee.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
@@ -23,7 +23,7 @@ import {
   ApiOperation,
   ApiQuery,
 } from "@nestjs/swagger";
-
+import { BulkCreateEmployeeDto } from "./dto/bulk-create-employee.dto";
 import { CreateEmployeeDto } from "./dto/create-employee.dto";
 import { UpdateEmployeeDto } from "./dto/update-employee.dto";
 
@@ -32,9 +32,10 @@ import { UpdateEmployeeDto } from "./dto/update-employee.dto";
 @ApiBearerAuth()
 @Controller("employee")
 export class EmployeeController {
-  constructor(
-    private service: EmployeeService
-  ) {}
+ constructor(
+  private service: EmployeeService,
+  private pendingEmployeeService: PendingEmployeeService,
+) {}
 
   // GET ALL EMPLOYEES
   @Get()
@@ -59,50 +60,89 @@ export class EmployeeController {
     @Query("page") page?: string,
     @Query("limit") limit?: string,
     @Query("search") search?: string,
+@Query("department") department?: string,
+@Query("designation") designation?: string,
+@Query("status") status?: string,
+@Query("employmentType") employmentType?: string,
+@Query("sortBy") sortBy?: string,
+@Query("sortOrder") sortOrder?: "asc" | "desc",
   ) {
     return this.service.getAll(
-      req.user.tenantId,
-      Math.max(Number(page) || 1, 1),
-
-Math.min(
-Math.max(Number(limit) || 10, 1),
-100
-),
-      search || "",
-    );
+  req.user.tenantId,
+  Math.max(Number(page) || 1, 1),
+  Math.min(Math.max(Number(limit) || 10, 1), 100),
+  search || "",
+  department,
+  designation,
+  status,
+  employmentType,
+  sortBy,
+  sortOrder,
+);
   }
 
   // CREATE EMPLOYEE
-  @Post()
-  @Roles("ADMIN")
-  @ApiOperation({
-    summary: "Create employee",
-  })
-  create(
-    @Body() body: CreateEmployeeDto,
-    @Req() req: any,
-  ) {
-    return this.service.create(
-      body,
-      req.user.tenantId,
-      req.user.email,
-    );
-  }
-@Post("bulk")
-@Roles("ADMIN")
-createBulk(
-  @Body() body: CreateEmployeeDto[],
+@Post()
+@Roles("ADMIN", "HR")
+@ApiOperation({
+  summary: "Create employee",
+})
+create(
+  @Body() body: CreateEmployeeDto,
   @Req() req: any,
 ) {
-  return this.service.createBulk(
+  return this.service.create(
     body,
     req.user.tenantId,
-     req.user.email,
+    req.user.email,
   );
 }
 
+@Post("bulk")
+@Roles("ADMIN", "HR")
+@ApiOperation({
+  summary: "Bulk create employees",
+})
+bulkCreate(
+  @Body() body: BulkCreateEmployeeDto,
+  @Req() req: any,
+) {
+  return this.service.bulkCreate(
+    body.employees,
+    req.user.tenantId,
+    req.user.email,
+  );
+}
 
+// GET PENDING EMPLOYEES
+@Get("pending")
+@Roles("ADMIN", "HR")
+@ApiOperation({
+  summary: "Get pending employee registrations",
+})
+getPendingEmployees(
+  @Req() req: any,
+) {
+  return this.pendingEmployeeService.getAllPending(
+    req.user.tenantId,
+  );
+}
 
+@Post("pending/:id/approve")
+@Roles("ADMIN", "HR")
+@ApiOperation({
+  summary: "Approve pending employee",
+})
+approvePendingEmployee(
+  @Param("id") id: string,
+  @Req() req: any,
+) {
+  return this.pendingEmployeeService.approvePendingEmployee(
+    id,
+    req.user.tenantId,
+    req.user.email,
+  );
+}
 // GET SINGLE EMPLOYEE
 @Get(":id")
 @Roles("ADMIN", "HR", "MANAGER")
@@ -153,4 +193,20 @@ getOne(
       req.user.email,
     );
   }
+
+  @Post("pending/:id/reject")
+@Roles("ADMIN", "HR")
+@ApiOperation({
+  summary: "Reject pending employee",
+})
+rejectPendingEmployee(
+  @Param("id") id: string,
+  @Req() req: any,
+) {
+  return this.pendingEmployeeService.rejectPendingEmployee(
+    id,
+    req.user.tenantId,
+    req.user.email,
+  );
+}
 }

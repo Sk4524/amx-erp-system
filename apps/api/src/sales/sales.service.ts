@@ -4,6 +4,12 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 
+import { FinanceService }
+from "../finance/finance.service";
+
+import { InvoicesService }
+from "../invoices/invoices.service";
+
 import { AuditService }
 from "../audit/audit.service";
 
@@ -30,7 +36,13 @@ export class SalesService {
   RealtimeGateway,
 
   private auditService:
-  AuditService
+  AuditService,
+
+  private financeService:
+  FinanceService,
+
+  private invoicesService:
+  InvoicesService,
 
 ) {}
 
@@ -321,6 +333,48 @@ if (!customer) {
         });
     }
 
+    await this.financeService.createTransaction(
+
+  {
+
+    amount:
+      order.totalAmount,
+
+    type:
+      "INCOME",
+
+    reference:
+      `Sales Order ${order.id}`,
+
+  },
+
+  tenantId,
+
+  userEmail,
+
+);
+
+await this.invoicesService.createInvoice(
+
+  {
+
+    customerName:
+      customer.name,
+
+    amount:
+      order.totalAmount,
+
+    dueDate:
+      new Date(
+        Date.now() +
+        7 * 24 * 60 * 60 * 1000,
+      ).toISOString(),
+
+  },
+
+  tenantId,
+
+);
     // DASHBOARD REFRESH
     this.realtimeGateway
       .dashboardRefresh();

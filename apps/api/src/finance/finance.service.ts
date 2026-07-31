@@ -28,33 +28,148 @@ constructor(
 
 ) {}
   // GET ALL TRANSACTIONS
-  async getTransactions(
-    tenantId: string,
-    search = ""
-  ) {
+ async getTransactions(
+  tenantId: string,
+  filters: {
+  search?: string;
+  fromDate?: string;
+  toDate?: string;
 
-    return this.prisma.transaction.findMany({
+  type?: string;
+  accountId?: string;
 
-      where: {
+  minAmount?: string;
+  maxAmount?: string;
 
-        tenantId,
+  sortBy?: string;
+},
+) {
 
+  const where: any = {
+    tenantId,
+  };
+
+  // Search by description/type/account
+  if (filters.search) {
+
+    where.OR = [
+
+      {
         type: {
-          contains: search,
+          contains: filters.search,
           mode: "insensitive",
         },
       },
 
-      include: {
-        account: true,
-        ledger: true,
+      {
+        description: {
+          contains: filters.search,
+          mode: "insensitive",
+        },
       },
 
-      orderBy: {
+      {
+        account: {
+          name: {
+            contains: filters.search,
+            mode: "insensitive",
+          },
+        },
+      },
+
+    ];
+
+  }
+
+  // Date filter
+  if (filters.fromDate || filters.toDate) {
+
+    where.createdAt = {};
+
+    if (filters.fromDate) {
+
+      where.createdAt.gte = new Date(filters.fromDate);
+
+    }
+
+    if (filters.toDate) {
+
+      const end = new Date(filters.toDate);
+
+      end.setHours(23, 59, 59, 999);
+
+      where.createdAt.lte = end;
+
+    }
+
+  }
+if (filters.type) {
+
+  where.type = filters.type;
+
+}
+
+if (filters.accountId) {
+
+  where.accountId = filters.accountId;
+
+}
+
+if (filters.minAmount || filters.maxAmount) {
+
+  where.amount = {};
+
+  if (filters.minAmount) {
+
+    where.amount.gte = Number(filters.minAmount);
+
+  }
+
+  if (filters.maxAmount) {
+
+    where.amount.lte = Number(filters.maxAmount);
+
+  }
+
+}
+  const transactions = await this.prisma.transaction.findMany({
+
+    where,
+
+    include: {
+      account: true,
+    },
+
+    orderBy:
+  filters.sortBy === "oldest"
+    ? {
+        createdAt: "asc",
+      }
+    : filters.sortBy === "highest"
+    ? {
+        amount: "desc",
+      }
+    : filters.sortBy === "lowest"
+    ? {
+        amount: "asc",
+      }
+    : {
         createdAt: "desc",
       },
-    });
-  }
+
+  });
+
+  return {
+
+    success: true,
+
+    data: transactions,
+
+  };
+
+}
+
+
 
   // CREATE TRANSACTION
   async createTransaction(
@@ -910,6 +1025,668 @@ if (
     message: "Account deleted",
 
     data: account,
+
+  };
+
+}
+
+async getFinanceSummary(
+  tenantId: string,
+) {
+
+  const income =
+    await this.prisma.transaction.aggregate({
+
+      where: {
+
+        tenantId,
+
+        type: "INCOME",
+
+      },
+
+      _sum: {
+
+        amount: true,
+
+      },
+
+    });
+
+  const expense =
+    await this.prisma.transaction.aggregate({
+
+      where: {
+
+        tenantId,
+
+        type: "EXPENSE",
+
+      },
+
+      _sum: {
+
+        amount: true,
+
+      },
+
+    });
+
+  const receivable =
+    await this.prisma.receivable.aggregate({
+
+      where: {
+
+        tenantId,
+
+        status: "PENDING",
+
+      },
+
+      _sum: {
+
+        amount: true,
+
+      },
+
+    });
+
+  const payable =
+    await this.prisma.payable.aggregate({
+
+      where: {
+
+        tenantId,
+
+        status: "PENDING",
+
+      },
+
+      _sum: {
+
+        amount: true,
+
+      },
+
+    });
+
+  const account =
+    await this.prisma.account.findFirst({
+
+      where: {
+
+        tenantId,
+
+      },
+
+    });
+
+  const transactionCount =
+    await this.prisma.transaction.count({
+
+      where: {
+
+        tenantId,
+
+      },
+
+    });
+
+  const totalIncome =
+    income._sum.amount || 0;
+
+  const totalExpense =
+    expense._sum.amount || 0;
+
+  return {
+
+    success: true,
+
+    data: {
+
+      totalIncome,
+
+      totalExpense,
+
+      netProfit:
+        totalIncome - totalExpense,
+
+      totalReceivable:
+        receivable._sum.amount || 0,
+
+      totalPayable:
+        payable._sum.amount || 0,
+
+      cashBalance:
+        account?.balance || 0,
+
+      transactionCount,
+
+    },
+
+  };
+
+}
+
+async getAnalytics(
+  tenantId: string,
+) {
+
+  const [
+    transactions,
+    payables,
+    receivables,
+  ] = await Promise.all([
+
+    this.prisma.transaction.findMany({
+      where: {
+        tenantId,
+      },
+    }),
+
+    this.prisma.payable.findMany({
+      where: {
+        tenantId,
+      },
+    }),
+
+    this.prisma.receivable.findMany({
+      where: {
+        tenantId,
+      },
+    }),
+
+  ]);
+
+  const income = transactions
+    .filter(t => t.type === "INCOME")
+    .reduce((sum, t) => sum + Number(t.amount), 0);
+
+  const expense = transactions
+    .filter(t => t.type === "EXPENSE")
+    .reduce((sum, t) => sum + Number(t.amount), 0);
+
+  const outstandingPayables = payables
+    .filter(p => p.status === "PENDING")
+    .reduce((sum, p) => sum + Number(p.amount), 0);
+
+  const outstandingReceivables = receivables
+    .filter(r => r.status === "PENDING")
+    .reduce((sum, r) => sum + Number(r.amount), 0);
+
+  return {
+
+    success: true,
+
+    data: {
+
+      income,
+
+      expense,
+
+      profit: income - expense,
+
+      transactionCount: transactions.length,
+
+      outstandingPayables,
+
+      outstandingReceivables,
+
+      totalPayables: payables.length,
+
+      totalReceivables: receivables.length,
+
+    },
+
+  };
+
+}
+async getTrialBalance(
+  tenantId: string,
+) {
+
+  const accounts =
+    await this.prisma.account.findMany({
+
+      where: {
+        tenantId,
+      },
+
+      include: {
+        ledgers: true,
+      },
+
+      orderBy: {
+        name: "asc",
+      },
+
+    });
+
+  const data =
+    accounts.map(account => {
+
+      const debit =
+        account.ledgers.reduce(
+
+          (sum, ledger) =>
+            sum + ledger.debit,
+
+          0,
+
+        );
+
+      const credit =
+        account.ledgers.reduce(
+
+          (sum, ledger) =>
+            sum + ledger.credit,
+
+          0,
+
+        );
+
+      return {
+
+        accountId:
+          account.id,
+
+        accountName:
+          account.name,
+
+        debit,
+
+        credit,
+
+        balance:
+          credit - debit,
+
+      };
+
+    });
+
+  return {
+
+    success: true,
+
+    data,
+
+  };
+
+}
+
+async getProfitAndLoss(
+  tenantId: string,
+) {
+
+  const income =
+    await this.prisma.transaction.aggregate({
+
+      where: {
+
+        tenantId,
+
+        type: "INCOME",
+
+      },
+
+      _sum: {
+
+        amount: true,
+
+      },
+
+    });
+
+  const expense =
+    await this.prisma.transaction.aggregate({
+
+      where: {
+
+        tenantId,
+
+        type: "EXPENSE",
+
+      },
+
+      _sum: {
+
+        amount: true,
+
+      },
+
+    });
+
+  const totalIncome =
+    income._sum.amount || 0;
+
+  const totalExpense =
+    expense._sum.amount || 0;
+
+  const grossProfit =
+    totalIncome - totalExpense;
+
+  return {
+
+    success: true,
+
+    data: {
+
+      totalIncome,
+
+      totalExpense,
+
+      grossProfit,
+
+      profitMargin:
+
+        totalIncome === 0
+
+          ? 0
+
+          : Number(
+
+              (
+
+                (grossProfit / totalIncome) *
+
+                100
+
+              ).toFixed(2)
+
+            ),
+
+    },
+
+  };
+
+}
+async getBalanceSheet(
+  tenantId: string,
+) {
+
+  const accounts =
+    await this.prisma.account.aggregate({
+
+      where: {
+        tenantId,
+      },
+
+      _sum: {
+        balance: true,
+      },
+
+    });
+
+  const payable =
+    await this.prisma.payable.aggregate({
+
+      where: {
+        tenantId,
+        status: "PENDING",
+      },
+
+      _sum: {
+        amount: true,
+      },
+
+    });
+
+  const assets =
+    accounts._sum.balance || 0;
+
+  const liabilities =
+    payable._sum.amount || 0;
+
+  const equity =
+    assets - liabilities;
+
+  return {
+
+    success: true,
+
+    data: {
+
+      assets,
+
+      liabilities,
+
+      equity,
+
+    },
+
+  };
+
+}
+
+async getCashFlow(
+  tenantId: string,
+) {
+
+  const income =
+    await this.prisma.transaction.aggregate({
+
+      where: {
+
+        tenantId,
+
+        type: "INCOME",
+
+      },
+
+      _sum: {
+
+        amount: true,
+
+      },
+
+    });
+
+  const expense =
+    await this.prisma.transaction.aggregate({
+
+      where: {
+
+        tenantId,
+
+        type: "EXPENSE",
+
+      },
+
+      _sum: {
+
+        amount: true,
+
+      },
+
+    });
+
+  const cashIn =
+    income._sum.amount || 0;
+
+  const cashOut =
+    expense._sum.amount || 0;
+
+  return {
+
+    success: true,
+
+    data: {
+
+      cashIn,
+
+      cashOut,
+
+      netCashFlow:
+        cashIn - cashOut,
+
+    },
+
+  };
+
+}
+
+async getMonthlyAnalytics(
+  tenantId: string,
+) {
+
+  const transactions =
+    await this.prisma.transaction.findMany({
+
+      where: {
+        tenantId,
+      },
+
+      orderBy: {
+        createdAt: "asc",
+      },
+
+    });
+
+  const monthly: Record<
+    string,
+    {
+      income: number;
+      expense: number;
+    }
+  > = {};
+
+  for (const tx of transactions) {
+
+    const month =
+      tx.createdAt.toLocaleString(
+        "en-US",
+        {
+          month: "short",
+          year: "numeric",
+        },
+      );
+
+    if (!monthly[month]) {
+
+      monthly[month] = {
+
+        income: 0,
+
+        expense: 0,
+
+      };
+
+    }
+
+    if (tx.type === "INCOME") {
+
+      monthly[month].income += tx.amount;
+
+    } else {
+
+      monthly[month].expense += tx.amount;
+
+    }
+
+  }
+
+  return {
+
+    success: true,
+
+    data: Object.entries(monthly).map(
+
+      ([month, values]) => ({
+
+        month,
+
+        income: values.income,
+
+        expense: values.expense,
+
+      }),
+
+    ),
+
+  };
+
+}
+
+async getFinanceKPIs(
+  tenantId: string,
+) {
+
+  const [
+    accounts,
+    income,
+    expense,
+    payables,
+    receivables,
+  ] = await Promise.all([
+
+    this.prisma.account.aggregate({
+      where: { tenantId },
+      _sum: { balance: true },
+    }),
+
+    this.prisma.transaction.aggregate({
+      where: {
+        tenantId,
+        type: "INCOME",
+      },
+      _sum: { amount: true },
+    }),
+
+    this.prisma.transaction.aggregate({
+      where: {
+        tenantId,
+        type: "EXPENSE",
+      },
+      _sum: { amount: true },
+    }),
+
+    this.prisma.payable.aggregate({
+      where: {
+        tenantId,
+        status: "PENDING",
+      },
+      _sum: { amount: true },
+    }),
+
+    this.prisma.receivable.aggregate({
+      where: {
+        tenantId,
+        status: "PENDING",
+      },
+      _sum: { amount: true },
+    }),
+
+  ]);
+
+  const totalIncome =
+    income._sum.amount || 0;
+
+  const totalExpense =
+    expense._sum.amount || 0;
+
+  return {
+
+    success: true,
+
+    data: {
+
+      accountBalance:
+        accounts._sum.balance || 0,
+
+      totalIncome,
+
+      totalExpense,
+
+      netProfit:
+        totalIncome - totalExpense,
+
+      pendingPayables:
+        payables._sum.amount || 0,
+
+      pendingReceivables:
+        receivables._sum.amount || 0,
+
+    },
 
   };
 

@@ -12,11 +12,17 @@ import Sidebar from "../../components/Sidebar";
 import AuthGuard from "../../components/AuthGuard";
 import LedgerTable from "./components/LedgerTable";
 import useRole from "../../lib/useRole";
-
-import { useEffect, useState } from "react";
-
+import socket from "../../lib/socket";
+import {
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+} from "react";
+import ExecutiveFinanceSummary from "./components/ExecutiveFinanceSummary";
+import FinanceSkeleton from "./components/FinanceSkeleton";
 import api from "../../lib/api";
-
+import FinanceActivity from "./components/FinanceActivity";
 import toast from "react-hot-toast";
 
 import { motion } from "framer-motion";
@@ -82,7 +88,66 @@ export default function FinancePage() {
 
   const [search, setSearch] =
     useState("");
+  const [fromDate, setFromDate] =
+    useState("");
 
+  const [toDate, setToDate] =
+    useState("");
+  const [transactionType, setTransactionType] =
+    useState("");
+
+  const [selectedAccount, setSelectedAccount] =
+    useState("");
+
+  const [minAmount, setMinAmount] =
+    useState("");
+
+  const [maxAmount, setMaxAmount] =
+    useState("");
+
+  const [sortBy, setSortBy] =
+    useState("latest");
+  const [analytics, setAnalytics] = useState({
+    income: 0,
+    expense: 0,
+    profit: 0,
+    transactionCount: 0,
+    outstandingPayables: 0,
+    outstandingReceivables: 0,
+    totalPayables: 0,
+    totalReceivables: 0,
+  });
+
+
+  const [monthlyAnalytics, setMonthlyAnalytics] =
+    useState<
+      {
+        month: string;
+        income: number;
+        expense: number;
+      }[]
+    >([]);
+
+  const [financeKPIs, setFinanceKPIs] = useState({
+    accountBalance: 0,
+    totalIncome: 0,
+    totalExpense: 0,
+    netProfit: 0,
+    pendingPayables: 0,
+    pendingReceivables: 0,
+  });
+
+  const [trialBalance, setTrialBalance] =
+    useState<any[]>([]);
+
+  const [profitLoss, setProfitLoss] =
+    useState<any>(null);
+
+  const [balanceSheet, setBalanceSheet] =
+    useState<any>(null);
+
+  const [cashFlow, setCashFlow] =
+    useState<any>(null);
 
   const [loading, setLoading] =
     useState(true);
@@ -91,47 +156,55 @@ export default function FinancePage() {
     useState(false);
   const [lastUpdated, setLastUpdated] =
     useState(new Date());
-  const refreshFinance = async () => {
+  const isMounted = useRef(true);
 
-    try {
+  const refreshTimeout = useRef<NodeJS.Timeout | null>(null);
 
-      setRefreshing(true);
-
-      await Promise.all([
-        fetchTransactions(),
-        fetchLedger(),
-        fetchAccounts(),
-        fetchPayables(),
-        fetchReceivables(),
-        fetchCustomers(),
-        fetchVendors(),
-      ]);
-      setLastUpdated(new Date());
-      toast.success("Finance data refreshed");
-
-    } catch {
-
-      toast.error("Refresh failed");
-
-    } finally {
-
-      setRefreshing(false);
-
-    }
-
-  };
 
   // LOAD ROLE
-  const {
-    role
-  } = useRole();
+ const {
+  role,
+  loading: roleLoading,
+} = useRole();
   // FETCH TRANSACTIONS
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
 
     try {
 
+      const params = new URLSearchParams();
+
+      if (search) {
+        params.append("search", search);
+      }
+
+      if (fromDate) {
+        params.append("fromDate", fromDate);
+      }
+
+      if (toDate) {
+        params.append("toDate", toDate);
+      }
+      if (transactionType) {
+        params.append("type", transactionType);
+      }
+
+      if (selectedAccount) {
+        params.append("accountId", selectedAccount);
+      }
+
+      if (minAmount) {
+        params.append("minAmount", minAmount);
+      }
+
+      if (maxAmount) {
+        params.append("maxAmount", maxAmount);
+      }
+
+      if (sortBy) {
+        params.append("sortBy", sortBy);
+      }
       const res = await api.get(
-        `/finance/transactions?search=${search}`
+        `/finance/transactions?${params.toString()}`
       );
       setTransactions(
         res.data.data || []
@@ -146,10 +219,104 @@ export default function FinancePage() {
         "Failed to load transactions"
       );
     }
-  };
+  }, [
+    search,
+    fromDate,
+    toDate,
+    transactionType,
+    selectedAccount,
+    minAmount,
+    maxAmount,
+    sortBy,
+  ]);
+
+  const fetchAnalytics = useCallback(async () => {
+
+    try {
+
+      const res = await api.get("/finance/analytics");
+
+      setAnalytics(res.data.data);
+
+    } catch (err) {
+
+      console.error(err);
+
+    }
+
+  }, []);
+
+  const fetchMonthlyAnalytics = useCallback(async () => {
+
+    try {
+
+      const res =
+        await api.get("/finance/monthly-analytics");
+
+      setMonthlyAnalytics(
+        res.data.data || []
+      );
+
+    } catch (err) {
+
+      console.error(err);
+
+      setMonthlyAnalytics([]);
+
+    }
+
+  }, []);
+
+  const fetchFinanceKPIs = useCallback(async () => {
+
+    try {
+
+      const res =
+        await api.get("/finance/kpis");
+
+      setFinanceKPIs(
+        res.data.data,
+      );
+
+    } catch (err) {
+
+      console.error(err);
+
+    }
+
+  }, []);
+
+  const fetchFinancialReports = useCallback(async () => {
+
+    try {
+
+      const [
+        trial,
+        profit,
+        balance,
+        cash,
+      ] = await Promise.all([
+        api.get("/finance/trial-balance"),
+        api.get("/finance/profit-loss"),
+        api.get("/finance/balance-sheet"),
+        api.get("/finance/cash-flow"),
+      ]);
+
+      setTrialBalance(trial.data.data);
+      setProfitLoss(profit.data.data);
+      setBalanceSheet(balance.data.data);
+      setCashFlow(cash.data.data);
+
+    } catch (err) {
+
+      console.error(err);
+
+    }
+
+  }, []);
 
   // FETCH ACCOUNTS
-  const fetchAccounts = async () => {
+  const fetchAccounts = useCallback(async () => {
 
     try {
 
@@ -159,7 +326,7 @@ export default function FinancePage() {
         );
 
       setAccounts(
-        res.data.data?.data || []
+        res.data.data || []
       );
 
     } catch (err) {
@@ -170,10 +337,10 @@ export default function FinancePage() {
 
     }
 
-  };
+  }, []);
 
   // FETCH LEDGER
-  const fetchLedger = async () => {
+  const fetchLedger = useCallback(async () => {
 
     try {
 
@@ -190,16 +357,16 @@ export default function FinancePage() {
 
       console.error(err);
 
-      setTransactions([]);
+      setLedger([]);
 
       toast.error(
         "Failed to load ledger"
       );
     }
-  };
+  }, []);
 
 
-  const fetchVendors = async () => {
+  const fetchVendors = useCallback(async () => {
 
     try {
 
@@ -216,9 +383,9 @@ export default function FinancePage() {
 
     }
 
-  };
+  }, []);
 
-  const fetchCustomers = async () => {
+  const fetchCustomers = useCallback(async () => {
 
     try {
 
@@ -235,9 +402,10 @@ export default function FinancePage() {
 
     }
 
-  };
+  }, []);
+
   // FETCH PAYABLES
-  const fetchPayables = async () => {
+  const fetchPayables = useCallback(async () => {
 
     try {
 
@@ -254,16 +422,16 @@ export default function FinancePage() {
 
       console.error(err);
 
-      setTransactions([]);
+      setPayables([]);
 
       toast.error(
         "Failed to load payables"
       );
     }
-  };
+  }, []);
 
   // FETCH RECEIVABLES
-  const fetchReceivables = async () => {
+  const fetchReceivables = useCallback(async () => {
 
     try {
 
@@ -279,13 +447,78 @@ export default function FinancePage() {
 
       console.error(err);
 
-      setTransactions([]);
+      setReceivables([]);
 
       toast.error(
         "Failed to load receivables"
       );
     }
-  };
+  }, []);
+
+
+  const refreshFinance = useCallback(async () => {
+
+    if (refreshing) {
+      return;
+    }
+
+    try {
+
+      setRefreshing(true);
+
+      await Promise.all([
+        fetchTransactions(),
+        fetchLedger(),
+        fetchAnalytics(),
+        fetchMonthlyAnalytics(),
+        fetchFinanceKPIs(),
+        fetchFinancialReports(),
+        fetchAccounts(),
+        fetchPayables(),
+        fetchReceivables(),
+        fetchCustomers(),
+        fetchVendors(),
+      ]);
+      if (isMounted.current) {
+
+        setLastUpdated(new Date());
+
+        if (!refreshing) {
+
+          toast.success("Finance updated");
+
+        }
+
+      }
+
+    } catch {
+
+      toast.error("Refresh failed");
+
+    } finally {
+
+      if (isMounted.current) {
+
+        setRefreshing(false);
+
+      }
+
+    }
+
+  }, [
+    refreshing,
+    fetchTransactions,
+    fetchLedger,
+    fetchAnalytics,
+    fetchMonthlyAnalytics,
+    fetchFinanceKPIs,
+    fetchFinancialReports,
+    fetchAccounts,
+    fetchPayables,
+    fetchReceivables,
+    fetchCustomers,
+    fetchVendors,
+  ]);
 
   // INITIAL LOAD
   useEffect(() => {
@@ -304,9 +537,12 @@ export default function FinancePage() {
     const loadData = async () => {
 
       setLoading(true);
-
       await Promise.all([
         fetchTransactions(),
+        fetchAnalytics(),
+        fetchMonthlyAnalytics(),
+        fetchFinanceKPIs(),
+        fetchFinancialReports(),
         fetchLedger(),
         fetchAccounts(),
         fetchPayables(),
@@ -314,14 +550,81 @@ export default function FinancePage() {
         fetchVendors(),
         fetchCustomers(),
       ]);
-      setLastUpdated(new Date());
-      setLoading(false);
+
+      if (isMounted.current) {
+
+        setLastUpdated(new Date());
+
+        setLoading(false);
+
+      }
+
     };
 
     loadData();
 
-  }, [search, role]);
+  },
 
+    [
+      role,
+      fetchTransactions,
+      fetchAnalytics,
+      fetchMonthlyAnalytics,
+      fetchFinanceKPIs,
+      fetchFinancialReports,
+      fetchLedger,
+      fetchAccounts,
+      fetchPayables,
+      fetchReceivables,
+      fetchVendors,
+      fetchCustomers,
+    ]
+
+  );
+
+  useEffect(() => {
+
+    const scheduleRefresh = () => {
+
+      if (refreshTimeout.current) {
+
+        clearTimeout(refreshTimeout.current);
+
+      }
+
+      refreshTimeout.current = setTimeout(() => {
+
+        refreshFinance();
+
+      }, 300);
+
+    };
+
+    socket.on("finance-updated", scheduleRefresh);
+
+    socket.on("dashboard-refresh", scheduleRefresh);
+
+    socket.on("notification", scheduleRefresh);
+
+    return () => {
+
+      isMounted.current = false;
+
+      if (refreshTimeout.current) {
+
+        clearTimeout(refreshTimeout.current);
+
+      }
+
+      socket.off("finance-updated", scheduleRefresh);
+
+      socket.off("dashboard-refresh", scheduleRefresh);
+
+      socket.off("notification", scheduleRefresh);
+
+    };
+
+  }, [refreshFinance]);
 
   // CREATE TRANSACTION
   const createTransaction = async () => {
@@ -350,6 +653,7 @@ export default function FinancePage() {
       setAmount("");
 
       await Promise.all([
+        fetchAnalytics(),
         fetchTransactions(),
         fetchLedger(),
       ]);
@@ -389,6 +693,7 @@ export default function FinancePage() {
       );
 
       await Promise.all([
+        fetchAnalytics(),
         fetchTransactions(),
         fetchLedger(),
       ]);
@@ -433,6 +738,7 @@ export default function FinancePage() {
       setPayableDueDate("")
 
       await Promise.all([
+        fetchAnalytics(),
         fetchPayables(),
         fetchLedger(),
       ]);
@@ -477,6 +783,7 @@ export default function FinancePage() {
       setReceivableDueDate("")
 
       await Promise.all([
+        fetchAnalytics(),
         fetchReceivables(),
         fetchLedger(),
       ]);
@@ -501,6 +808,7 @@ export default function FinancePage() {
       );
 
       await Promise.all([
+        fetchAnalytics(),
         fetchPayables(),
         fetchLedger(),
         fetchTransactions(),
@@ -529,6 +837,7 @@ export default function FinancePage() {
       );
 
       await Promise.all([
+        fetchAnalytics(),
         fetchReceivables(),
         fetchLedger(),
         fetchTransactions(),
@@ -546,18 +855,6 @@ export default function FinancePage() {
   };
 
   // ANALYTICS
-  const income = transactions
-    .filter((t) => t.type === "INCOME")
-    .reduce((a, b) => a + b.amount, 0);
-
-  const expense = transactions
-    .filter((t) => t.type === "EXPENSE")
-    .reduce((a, b) => a + b.amount, 0);
-
-  const netProfit =
-    income - expense;
-
-
   const pendingPayables = payables.filter(
     (item: any) => item.status === "PENDING"
   );
@@ -566,15 +863,6 @@ export default function FinancePage() {
     (item: any) => item.status === "PENDING"
   );
 
-  const outstandingPayableAmount = pendingPayables.reduce(
-    (sum: number, item: any) => sum + Number(item.amount),
-    0
-  );
-
-  const outstandingReceivableAmount = pendingReceivables.reduce(
-    (sum: number, item: any) => sum + Number(item.amount),
-    0
-  );
   const handleExportPDF = () => {
     exportTransactionsPDF(transactions);
   };
@@ -583,9 +871,57 @@ export default function FinancePage() {
     exportTransactionsToExcel(transactions);
   };
 
-  if (!role) {
+ if (roleLoading) {
 
-    return null;
+  return (
+
+    <AuthGuard>
+
+      <div className="flex">
+
+        <Sidebar />
+
+        <div className="ml-[290px] w-full px-6 xl:px-8 py-7 bg-gradient-to-br from-[#eef2f7] to-[#e5ebf3] min-h-screen">
+
+          <FinanceSkeleton />
+
+        </div>
+
+      </div>
+
+    </AuthGuard>
+
+  );
+
+}
+
+if (!role) {
+
+  return null;
+
+}
+  if (loading) {
+
+    return (
+
+      <AuthGuard>
+
+        <div className="flex">
+
+          <Sidebar />
+
+          <div className="ml-[290px] w-full px-6 xl:px-8 py-7 bg-gradient-to-br from-[#eef2f7] to-[#e5ebf3] min-h-screen">
+
+            <FinanceSkeleton />
+
+          </div>
+
+        </div>
+
+      </AuthGuard>
+
+    );
+
   }
 
   return (
@@ -607,57 +943,138 @@ export default function FinancePage() {
           <FinanceHero
             search={search}
             setSearch={setSearch}
+
+            fromDate={fromDate}
+            toDate={toDate}
+
+            setFromDate={setFromDate}
+            setToDate={setToDate}
+
             lastUpdated={lastUpdated}
-            income={income}
-            expense={expense}
-            profit={netProfit}
+
+            income={analytics.income}
+            expense={analytics.expense}
+            profit={analytics.profit}
 
             payables={pendingPayables.length}
             receivables={pendingReceivables.length}
+
+            onSearch={fetchTransactions}
 
             onRefresh={refreshFinance}
             refreshing={refreshing}
 
             onExportPDF={handleExportPDF}
             onExportExcel={handleExportExcel}
+
+            transactionType={transactionType}
+            setTransactionType={setTransactionType}
+
+            selectedAccount={selectedAccount}
+            setSelectedAccount={setSelectedAccount}
+
+            accounts={accounts}
+
+            minAmount={minAmount}
+            maxAmount={maxAmount}
+
+            setMinAmount={setMinAmount}
+            setMaxAmount={setMaxAmount}
+
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            onResetFilters={() => {
+
+              setSearch("");
+              setFromDate("");
+              setToDate("");
+
+              setTransactionType("");
+              setSelectedAccount("");
+
+              setMinAmount("");
+              setMaxAmount("");
+
+              setSortBy("latest");
+
+              fetchTransactions();
+
+            }}
           />
 
+
+          <div className="mb-10">
+            <ExecutiveFinanceSummary
+              financeKPIs={financeKPIs}
+            />
+          </div>
 
           {/* ANALYTICS */}
-          <FinanceKPIs
-            income={income}
-            expense={expense}
-            profit={netProfit}
-            accounts={accounts.length}
-            payables={pendingPayables.length}
-            receivables={pendingReceivables.length}
-          />
-
-          <ExecutiveOverview
-            income={income}
-            expense={expense}
-            payables={pendingPayables.length}
-            receivables={pendingReceivables.length}
-          />
-          <AIFinanceInsights
-            income={income}
-            expense={expense}
-            payables={pendingPayables.length}
-            receivables={pendingReceivables.length}
-          />
-
-          <FinanceCharts
-            income={income}
-            expense={expense}
-            payables={outstandingPayableAmount}
-            receivables={outstandingReceivableAmount}
-          />
-          <div className="grid 2xl:grid-cols-2 gap-7 mb-8">
-
-            <FinancialStatements
-              income={income}
-              expense={expense}
+          <div className="mb-10">
+            <FinanceKPIs
+              income={financeKPIs.totalIncome}
+              expense={financeKPIs.totalExpense}
+              profit={financeKPIs.netProfit}
+              cashBalance={financeKPIs.accountBalance}
+              accounts={accounts.length}
+              payables={financeKPIs.pendingPayables}
+              receivables={financeKPIs.pendingReceivables}
             />
+          </div>
+          <div className="mb-10">
+            <ExecutiveOverview
+              income={analytics.income}
+              expense={analytics.expense}
+              payables={pendingPayables.length}
+              receivables={pendingReceivables.length}
+            />
+          </div>
+
+          <div className="mb-10">
+            <AIFinanceInsights
+              income={analytics.income}
+              expense={analytics.expense}
+              payables={pendingPayables.length}
+              receivables={pendingReceivables.length}
+            />
+          </div>
+
+          <div className="mb-10">
+            <FinanceCharts
+              income={analytics.income}
+              expense={analytics.expense}
+              payables={analytics.outstandingPayables}
+              receivables={analytics.outstandingReceivables}
+              monthlyAnalytics={monthlyAnalytics}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 2xl:grid-cols-12 gap-8 mb-12 items-start">
+
+            <div className="2xl:col-span-8">
+
+              <FinancialStatements
+                income={financeKPIs.totalIncome}
+                expense={financeKPIs.totalExpense}
+
+                trialBalance={trialBalance}
+
+                profitLoss={profitLoss}
+
+                balanceSheet={balanceSheet}
+
+                cashFlow={cashFlow}
+              />
+
+            </div>
+            <div className="2xl:col-span-4">
+              <FinanceActivity
+                transactions={transactions}
+              />
+            </div>
+          </div>
+
+          <div className="mb-12">
 
             <FinanceQuickActions
               role={role}
@@ -670,8 +1087,82 @@ export default function FinancePage() {
 
           </div>
 
-          {/* AP/AR SECTION */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8 items-stretch">
+          {/* ================================
+      ACCOUNTS PAYABLE & RECEIVABLE
+================================ */}
+
+          <div className="mb-8">
+
+            <div className="rounded-[34px] border border-white/50 bg-white/80 backdrop-blur-2xl shadow-[0_10px_35px_rgba(0,0,0,.06)] p-8">
+
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+
+                <div>
+
+                  <p className="uppercase tracking-[0.30em] text-xs font-bold text-slate-500">
+
+                    WORKING CAPITAL
+
+                  </p>
+
+                  <h2 className="mt-2 text-[38px] font-black text-slate-900">
+
+                    Accounts Payable & Receivable
+
+                  </h2>
+
+                  <p className="mt-3 max-w-3xl text-slate-500 leading-7">
+
+                    Manage vendor obligations and customer collections from a unified
+                    enterprise workspace with real-time financial visibility.
+
+                  </p>
+
+                </div>
+
+                <div className="flex gap-4">
+
+                  <div className="rounded-3xl bg-orange-100 px-6 py-5">
+
+                    <p className="text-xs font-semibold text-orange-600">
+
+                      PAYABLES
+
+                    </p>
+
+                    <h3 className="mt-2 text-3xl font-black text-orange-600">
+
+                      {pendingPayables.length}
+
+                    </h3>
+
+                  </div>
+
+                  <div className="rounded-3xl bg-blue-100 px-6 py-5">
+
+                    <p className="text-xs font-semibold text-blue-600">
+
+                      RECEIVABLES
+
+                    </p>
+
+                    <h3 className="mt-2 text-3xl font-black text-blue-600">
+
+                      {pendingReceivables.length}
+
+                    </h3>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-12 items-start">
 
             {/* PAYABLES */}
             <div className="h-full">
@@ -716,12 +1207,14 @@ export default function FinancePage() {
           </div>
 
           {/* TRANSACTIONS */}
-          <TransactionTable
-            transactions={transactions}
-            loading={loading}
-            role={role}
-            onDelete={deleteTransaction}
-          />
+          <div className="mb-12">
+            <TransactionTable
+              transactions={transactions}
+              loading={loading}
+              role={role}
+              onDelete={deleteTransaction}
+            />
+          </div>
           {/* LEDGER */}
           <LedgerTable
             ledger={ledger}

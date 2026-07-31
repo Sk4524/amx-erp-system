@@ -81,13 +81,13 @@ export default function ReceivablesCard({
 
             </p>
 
-            <h2 className="mt-2 text-[34px] font-black text-slate-900">
+            <h2 className="mt-2 text-[28px] font-black text-slate-900">
 
               Accounts Receivable
 
             </h2>
 
-            <p className="mt-2 text-gray-500">
+            <p className="mt-2 text-[15px] text-gray-500">
 
               Customer invoices, outstanding collections and payment tracking.
 
@@ -119,63 +119,94 @@ export default function ReceivablesCard({
 
         </div>
 
-        {/* FORM */}
+        {/* CREATE FORM */}
 
         {role === "ADMIN" && (
 
-          <div className="flex flex-col gap-4 mb-8 max-w-xl">
+          <div className="mb-8 rounded-[30px] border border-blue-100 bg-gradient-to-br from-cyan-50/70 via-white to-blue-50/70 p-7">
 
-            <select
-              value={selectedCustomer}
-              onChange={(e) => setSelectedCustomer(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-white p-4 outline-none focus:ring-2 focus:ring-blue-500"
-            >
+            <div className="flex items-center justify-between mb-6">
 
-              <option value="">
+              <div>
 
-                Select Customer
+                <p className="uppercase tracking-[0.28em] text-[11px] font-bold text-blue-600">
 
-              </option>
+                  QUICK RECEIVABLE ENTRY
 
-              {customers.map((c: any) => (
+                </p>
 
-                <option
-                  key={c.id}
-                  value={c.name}
-                >
-                  {c.name}
+                <h3 className="mt-2 text-2xl font-black text-slate-900">
+
+                  Create Customer Invoice
+
+                </h3>
+
+              </div>
+
+              <div className="rounded-2xl bg-blue-100 px-4 py-2 text-sm font-semibold text-blue-700">
+
+                Accounts Receivable
+
+              </div>
+
+            </div>
+
+            <div className="grid gap-4">
+
+              <select
+                value={selectedCustomer}
+                onChange={(e) => setSelectedCustomer(e.target.value)}
+                className="w-full rounded-2xl border border-slate-200 bg-white p-4 outline-none focus:ring-2 focus:ring-blue-500"
+              >
+
+                <option value="">
+
+                  Select Customer
+
                 </option>
 
-              ))}
+                {customers.map((c: any) => (
 
-            </select>
+                  <option
+                    key={c.id}
+                    value={c.name}
+                  >
 
-            <input
-              type="number"
-              placeholder="Invoice Amount"
-              value={receivableAmount}
-              onChange={(e) => setReceivableAmount(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-white p-4 outline-none focus:ring-2 focus:ring-blue-500"
-            />
+                    {c.name}
 
-            <input
-              type="date"
-              value={receivableDueDate}
-              onChange={(e) => setReceivableDueDate(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-white p-4 outline-none focus:ring-2 focus:ring-blue-500"
-            />
+                  </option>
 
-            <button
-              onClick={createReceivable}
-              className="w-full rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500 text-white font-bold py-4 flex items-center justify-center gap-2 hover:scale-[1.02] transition-all duration-300"
+                ))}
 
-            >
+              </select>
 
-              <Plus size={18} />
+              <input
+                type="number"
+                placeholder="Invoice Amount"
+                value={receivableAmount}
+                onChange={(e) => setReceivableAmount(e.target.value)}
+                className="w-full rounded-2xl border border-slate-200 bg-white p-4 outline-none focus:ring-2 focus:ring-blue-500"
+              />
 
-              Create Invoice
+              <input
+                type="date"
+                value={receivableDueDate}
+                onChange={(e) => setReceivableDueDate(e.target.value)}
+                className="w-full rounded-2xl border border-slate-200 bg-white p-4 outline-none focus:ring-2 focus:ring-blue-500"
+              />
 
-            </button>
+              <button
+                onClick={createReceivable}
+                className="w-full rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500 text-white font-bold py-4 flex items-center justify-center gap-2 hover:scale-[1.02] transition-all duration-300"
+              >
+
+                <Plus size={18} />
+
+                Create Invoice
+
+              </button>
+
+            </div>
 
           </div>
 
@@ -225,114 +256,125 @@ export default function ReceivablesCard({
 
             >
 
-              <div className="rounded-[29px] bg-white/10 backdrop-blur-xl p-6">
+              <div className="flex justify-between items-start">
 
-                <div className="flex justify-between items-start">
+                <div className="flex items-center gap-4">
 
-                  <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-3xl bg-white/15 flex items-center justify-center backdrop-blur-xl border border-white/20">
 
-                    <div className="bg-white/15 p-4 rounded-3xl text-white">
-
-                      <Building2 size={28} />
-
-                    </div>
-
-                    <div>
-
-                      <h3 className="text-2xl font-bold text-white">
-
-                        {item.customerName}
-
-                      </h3>
-
-                      <p className="text-white/70 mt-1">
-
-                        Customer Invoice
-
-                      </p>
-
-                    </div>
-
-                  </div>
-
-                  {item.status === "RECEIVED" ? (
-
-                    <div className="bg-green-500/20 border border-green-300/40 text-white px-4 py-2 rounded-full flex items-center gap-2">
-
-                      <CheckCircle2 size={16} />
-
-                      RECEIVED
-
-                    </div>
-
-                  ) : (
-
-                    <div className="bg-yellow-500/20 border border-yellow-300/40 text-white px-4 py-2 rounded-full flex items-center gap-2">
-
-                      <Clock3 size={16} />
-
-                      PENDING
-
-                    </div>
-
-                  )}
-
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-6 mt-8">
-
-                  <div>
-
-                    <p className="text-white/70 text-sm">
-
-                      Invoice Amount
-
-                    </p>
-
-                    <h2 className="text-4xl font-black text-white mt-2">
-
-                      ₹{Number(item.amount).toLocaleString()}
-
-                    </h2>
+                    <Building2 size={30} />
 
                   </div>
 
                   <div>
 
-                    <p className="text-white/70 text-sm">
+                    <p className="uppercase tracking-[0.22em] text-[11px] text-cyan-100 font-bold">
 
-                      Due Date
+                      Customer
 
                     </p>
 
-                    <div className="mt-3 flex items-center gap-2 text-white font-semibold">
+                    <h3 className="mt-1 text-2xl font-black text-white">
 
-                      <CalendarDays size={18} />
+                      {item.customerName}
 
-                      {new Date(item.dueDate).toLocaleDateString()}
+                    </h3>
 
-                    </div>
+                    <p className="mt-1 text-white/70">
+
+                      Accounts Receivable Invoice
+
+                    </p>
 
                   </div>
 
                 </div>
 
-                {item.status !== "RECEIVED" && (
+                <div
+                  className={`rounded-2xl px-4 py-2 text-sm font-bold backdrop-blur-xl border ${item.status === "RECEIVED"
+                      ? "bg-emerald-500/20 border-emerald-300/40"
+                      : "bg-amber-500/20 border-amber-300/40"
+                    }`}
+                >
 
-                  <button
-                    onClick={() => markReceived(item.id)}
-                    className="mt-8 w-full rounded-2xl bg-white text-blue-600 font-bold py-4 hover:scale-[1.02] transition-all duration-300 flex items-center justify-center gap-2"
-                  >
+                  <div className="flex items-center gap-2 text-white">
+
+                    {item.status === "RECEIVED"
+
+                      ? <CheckCircle2 size={16} />
+
+                      : <Clock3 size={16} />
+
+                    }
+
+                    {item.status}
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-5 mt-8">
+
+                <div className="rounded-3xl bg-white/10 border border-white/15 backdrop-blur-xl p-5">
+
+                  <p className="uppercase tracking-[0.20em] text-[11px] text-cyan-100 font-bold">
+
+                    Invoice Amount
+
+                  </p>
+
+                  <h2 className="mt-3 text-4xl font-black text-white">
+
+                    ₹{Number(item.amount).toLocaleString()}
+
+                  </h2>
+
+                </div>
+
+                <div className="rounded-3xl bg-white/10 border border-white/15 backdrop-blur-xl p-5">
+
+                  <p className="uppercase tracking-[0.20em] text-[11px] text-cyan-100 font-bold">
+
+                    Due Date
+
+                  </p>
+
+                  <div className="mt-4 flex items-center gap-3 text-white text-lg font-bold">
+
+                    <CalendarDays size={20} />
+
+                    {new Date(item.dueDate).toLocaleDateString()}
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              {item.status !== "RECEIVED" && (
+
+                <button
+                  onClick={() => markReceived(item.id)}
+                  className="group mt-8 w-full rounded-3xl bg-white text-blue-600 font-bold py-4 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3"
+                >
+
+                  <div className="rounded-full bg-blue-100 p-2 group-hover:scale-110 transition">
 
                     <CircleDollarSign size={20} />
 
-                    Mark as Received
+                  </div>
 
-                  </button>
+                  <span>
 
-                )}
+                    Mark Invoice as Received
 
-              </div>
+                  </span>
+
+                </button>
+
+              )}
 
             </motion.div>
 

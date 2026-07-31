@@ -11,10 +11,33 @@ import {
   RefreshCw,
 } from "lucide-react";
 
-
 interface FinanceHeroProps {
   search: string;
   setSearch: (value: string) => void;
+
+  fromDate: string;
+  toDate: string;
+
+  setFromDate: (value: string) => void;
+  setToDate: (value: string) => void;
+  transactionType: string;
+  setTransactionType: (value: string) => void;
+
+  selectedAccount: string;
+  setSelectedAccount: (value: string) => void;
+
+  accounts: any[];
+
+  minAmount: string;
+  maxAmount: string;
+
+  setMinAmount: (value: string) => void;
+  setMaxAmount: (value: string) => void;
+
+  sortBy: string;
+  setSortBy: (value: string) => void;
+
+  onResetFilters: () => void;
 
   income: number;
   expense: number;
@@ -22,7 +45,9 @@ interface FinanceHeroProps {
 
   payables: number;
   receivables: number;
+
   lastUpdated: Date;
+  onSearch: () => void;
   onRefresh: () => void;
   refreshing: boolean;
 
@@ -33,13 +58,36 @@ interface FinanceHeroProps {
 export default function FinanceHero({
   search,
   setSearch,
+  fromDate,
+  toDate,
 
+  setFromDate,
+  setToDate,
+  transactionType,
+  setTransactionType,
+
+  selectedAccount,
+  setSelectedAccount,
+
+  accounts,
+
+  minAmount,
+  maxAmount,
+
+  setMinAmount,
+  setMaxAmount,
+
+  sortBy,
+  setSortBy,
+
+  onResetFilters,
   income,
   expense,
   profit,
   payables,
   receivables,
   lastUpdated,
+  onSearch,
   onExportPDF,
   onExportExcel,
   onRefresh,
@@ -96,9 +144,9 @@ export default function FinanceHero({
 
               <div className="absolute inset-0 bg-emerald-500/30 blur-2xl rounded-full" />
 
-              <div className="relative bg-gradient-to-br from-emerald-600 via-green-500 to-cyan-500 text-white p-5 rounded-[30px] shadow-[0_15px_40px_rgba(16,185,129,.35)]">
+              <div className="relative bg-gradient-to-br from-emerald-600 via-green-500 to-cyan-500 text-white p-4 rounded-[30px] shadow-[0_15px_40px_rgba(16,185,129,.35)]">
 
-                <Landmark size={34} />
+                <Landmark size={28} />
 
               </div>
 
@@ -114,17 +162,15 @@ export default function FinanceHero({
 
               </p>
 
-              <h1 className="mt-2 text-[52px] leading-none font-black text-slate-900">
+              <h1 className="mt-2 text-[42px] xl:text-[46px] leading-tight font-black text-slate-900">
 
                 Financial Command Center
 
               </h1>
 
-              <p className="mt-5 text-gray-600 max-w-3xl leading-8 text-[16px]">
+              <p className="mt-4 max-w-2xl text-[15px] leading-7 text-slate-600">
 
-                Unified financial intelligence for revenue,
-                cash flow, payables, receivables,
-                ledger management and executive analytics.
+                Enterprise finance dashboard for real-time accounting, cash flow, payables, receivables, ledger management and AI-powered executive insights.
 
               </p>
 
@@ -134,7 +180,7 @@ export default function FinanceHero({
 
           {/* STATUS */}
 
-          <div className="flex flex-wrap gap-3 mt-8">
+          <div className="flex flex-wrap gap-3 mt-6">
 
             <div className="flex items-center gap-2 bg-emerald-100 text-emerald-700 px-4 py-2 rounded-2xl border border-emerald-200 font-semibold">
 
@@ -160,7 +206,7 @@ export default function FinanceHero({
 
           </div>
 
-          <div className="mt-8 flex flex-wrap items-center gap-8">
+          <div className="mt-6 flex flex-wrap items-center gap-6">
 
             <div>
 
@@ -198,9 +244,9 @@ export default function FinanceHero({
 
         {/* RIGHT */}
 
-        <div className="w-full xl:w-[390px]">
+        <div className="w-full xl:w-[360px]">
 
-          <div className="rounded-[32px] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-7 shadow-2xl">
+          <div className="rounded-[28px] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-6 shadow-2xl">
 
             <p className="uppercase tracking-[0.25em] text-cyan-300 text-xs font-bold">
 
@@ -208,13 +254,13 @@ export default function FinanceHero({
 
             </p>
 
-            <h3 className="mt-4 text-2xl font-bold">
+            <h3 className="mt-3 text-xl font-bold">
 
               {today}
 
             </h3>
 
-            <div className="grid grid-cols-2 gap-3 mt-7">
+            <div className="grid grid-cols-2 gap-3 mt-5">
 
               <div className="rounded-2xl bg-white/10 p-4">
 
@@ -224,7 +270,7 @@ export default function FinanceHero({
 
                 </p>
 
-                <h4 className="mt-2 text-xl font-bold">
+                <h4 className="mt-1 text-lg font-bold">
 
                   {payables}
 
@@ -252,7 +298,7 @@ export default function FinanceHero({
 
             {/* SEARCH */}
 
-            <div className="relative mt-7">
+            <div className="relative mt-5">
 
               <Search
                 size={18}
@@ -265,14 +311,136 @@ export default function FinanceHero({
                   setSearch(e.target.value)
                 }
                 placeholder="Search transactions..."
-                className="w-full rounded-2xl bg-white/10 border border-white/10 py-4 pl-11 pr-4 outline-none placeholder:text-gray-400"
+                className="w-full rounded-2xl bg-white/10 border border-white/10 py-4 pl-11 pr-4 outline-none text-white placeholder:text-slate-300"
               />
 
             </div>
 
+
+            <div className="grid grid-cols-2 gap-3 mt-5">
+
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="rounded-2xl bg-white/10 border border-white/10 py-3 px-4 outline-none text-white"
+              />
+
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="rounded-2xl bg-white/10 border border-white/10 py-3 px-4 outline-none text-white"
+              />
+
+            </div>
+            <div className="grid grid-cols-2 gap-3 mt-4">
+
+              <select
+                value={transactionType}
+                onChange={(e) =>
+                  setTransactionType(e.target.value)
+                }
+                className="rounded-2xl bg-white/10 border border-white/10 py-3 px-4 text-white"
+              >
+                <option value="" style={{ color: "black" }}>
+                  All Types
+                </option>
+
+                <option value="INCOME" style={{ color: "black" }}>
+                  Income
+                </option>
+
+                <option value="EXPENSE" style={{ color: "black" }}>
+                  Expense
+                </option>
+              </select>
+
+              <select
+                value={selectedAccount}
+                onChange={(e) =>
+                  setSelectedAccount(e.target.value)
+                }
+                className="rounded-2xl bg-white/10 border border-white/10 py-3 px-4 text-white"
+              >
+                <option value="">All Accounts</option>
+
+                {accounts.map((account: any) => (
+
+                  <option
+                    key={account.id}
+                    value={account.id}
+                    style={{ color: "black" }}
+                  >
+                    {account.name}
+                  </option>
+
+                ))}
+
+              </select>
+
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mt-3">
+
+              <input
+                type="number"
+                placeholder="Min Amount"
+                value={minAmount}
+                onChange={(e) =>
+                  setMinAmount(e.target.value)
+                }
+                className="rounded-2xl bg-white/10 border border-white/10 py-3 px-4 text-white placeholder:text-slate-300"
+              />
+
+              <input
+                type="number"
+                placeholder="Max Amount"
+                value={maxAmount}
+                onChange={(e) =>
+                  setMaxAmount(e.target.value)
+                }
+                className="rounded-2xl bg-white/10 border border-white/10 py-3 px-4 text-white placeholder:text-slate-300"
+              />
+
+            </div>
+
+            <div className="mt-3">
+
+              <select
+                value={sortBy}
+                onChange={(e) =>
+
+                  setSortBy(e.target.value)
+                }
+                className="w-full rounded-2xl bg-white/10 border border-white/10 py-3 px-4 text-white"
+              >
+
+                <option value="latest" style={{ color: "black" }}>
+                  Latest First
+                </option>
+
+                <option value="oldest" style={{ color: "black" }}>
+                  Oldest First
+                </option>
+
+                <option value="highest" style={{ color: "black" }}>
+                  Highest Amount
+                </option>
+
+                <option value="lowest" style={{ color: "black" }}>
+                  Lowest Amount
+                </option>
+
+              </select>
+
+            </div>
             {/* BUTTONS */}
 
-            <button className="mt-5 w-full rounded-2xl bg-gradient-to-r from-emerald-500 via-green-500 to-cyan-500 py-4 font-bold hover:scale-[1.02] transition-all flex justify-center items-center gap-2">
+            <button
+              onClick={onSearch}
+              className="mt-5 w-full rounded-2xl bg-gradient-to-r from-emerald-500 via-green-500 to-cyan-500 py-4 font-bold hover:scale-[1.02] transition-all flex justify-center items-center gap-2"
+            >
 
               <Search size={18} />
 
@@ -295,7 +463,7 @@ export default function FinanceHero({
 
               </button>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
 
                 <button
                   onClick={onExportPDF}
@@ -316,7 +484,12 @@ export default function FinanceHero({
                   Excel
 
                 </button>
-
+                <button
+                  onClick={onResetFilters}
+                  className="w-full rounded-2xl border border-slate-600 bg-slate-700/40 hover:bg-slate-700/70 py-3 font-medium transition-all"
+                >
+                  Reset Filters
+                </button>
               </div>
 
             </div>

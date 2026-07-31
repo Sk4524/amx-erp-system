@@ -67,8 +67,119 @@ getAll(
 
 }
 
+@Get("summary")
+@Roles(
+  "ADMIN",
+  "MANAGER",
+  "FINANCE",
+)
+@ApiOperation({
+  summary: "Inventory dashboard summary",
+})
+getInventorySummary(
+  @Req() req: any,
+) {
 
+  return this.service.getInventorySummary(
+    req.user.tenantId,
+  );
 
+}
+
+@Get("low-stock")
+@Roles(
+  "ADMIN",
+  "MANAGER",
+  "FINANCE",
+)
+@ApiOperation({
+  summary: "Low stock items",
+})
+getLowStockItems(
+  @Req() req: any,
+) {
+
+  return this.service.getLowStockItems(
+    req.user.tenantId,
+  );
+
+}
+
+@Get("out-of-stock")
+@Roles(
+  "ADMIN",
+  "MANAGER",
+  "FINANCE",
+)
+@ApiOperation({
+  summary: "Out of stock items",
+})
+getOutOfStockItems(
+  @Req() req: any,
+) {
+
+  return this.service.getOutOfStockItems(
+    req.user.tenantId,
+  );
+
+}
+
+@Get("valuation")
+@Roles(
+  "ADMIN",
+  "MANAGER",
+  "FINANCE",
+)
+@ApiOperation({
+  summary: "Inventory valuation report",
+})
+getInventoryValuation(
+  @Req() req: any,
+) {
+
+  return this.service.getInventoryValuation(
+    req.user.tenantId,
+  );
+
+}
+
+@Get("category-analytics")
+@Roles(
+  "ADMIN",
+  "MANAGER",
+  "FINANCE",
+)
+@ApiOperation({
+  summary: "Inventory category analytics",
+})
+getCategoryAnalytics(
+  @Req() req: any,
+) {
+
+  return this.service.getCategoryAnalytics(
+    req.user.tenantId,
+  );
+
+}
+
+@Get("monthly-analytics")
+@Roles(
+  "ADMIN",
+  "MANAGER",
+  "FINANCE",
+)
+@ApiOperation({
+  summary: "Monthly inventory analytics",
+})
+getMonthlyInventoryAnalytics(
+  @Req() req: any,
+) {
+
+  return this.service.getMonthlyInventoryAnalytics(
+    req.user.tenantId,
+  );
+
+}
 
   // CREATE INVENTORY
   @ApiOperation({

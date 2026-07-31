@@ -60,6 +60,40 @@ export class UserController {
     );
   }
 
+  @Get("pending")
+@Roles("ADMIN", "HR")
+getPendingUsers(
+  @Req() req: any,
+) {
+  return this.userService.getPendingUsers(
+    req.user.tenantId,
+  );
+}
+
+@Put(":id/approve")
+@Roles("ADMIN", "HR")
+approveUser(
+  @Param("id") id: string,
+  @Req() req: any,
+) {
+  return this.userService.approveUser(
+    id,
+    req.user.tenantId,
+  );
+}
+
+@Put(":id/reject")
+@Roles("ADMIN", "HR")
+rejectUser(
+  @Param("id") id: string,
+  @Req() req: any,
+) {
+  return this.userService.rejectUser(
+    id,
+    req.user.tenantId,
+  );
+}
+
   // CREATE USER
   @ApiOperation({
   summary: "Create user"

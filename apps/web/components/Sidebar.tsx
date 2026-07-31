@@ -246,6 +246,12 @@ export default function Sidebar() {
     },
 
     {
+      label: "Payroll",
+      icon: Briefcase,
+      path: "/payroll",
+    },
+
+    {
       label: "Projects",
       icon: FolderKanban,
       path: "/projects",
@@ -276,6 +282,13 @@ export default function Sidebar() {
       icon: DollarSign,
       path: "/finance",
     },
+
+    {
+      label: "Invoices",
+      icon: FileSpreadsheet,
+      path: "/invoices",
+    },
+
 
     {
       section: "CRM & ANALYTICS",
@@ -806,11 +819,15 @@ export default function Sidebar() {
 
                   <div
                     key={item.label}
-                    onClick={() =>
-                      router.push(
-                        item.path
-                      )
-                    }
+                    onClick={() => {
+
+                      if (pathname === item.path) {
+                        return;
+                      }
+
+                      window.location.href = item.path;
+
+                    }}
                     className={clsx(
 
                       "group relative flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all duration-300 mb-1.5",

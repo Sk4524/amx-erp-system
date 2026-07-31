@@ -6,6 +6,7 @@ import {
   Param,
   Body,
   Req,
+  Query,
   UseGuards,
 } from "@nestjs/common";
 
@@ -46,19 +47,92 @@ export class InvoicesController {
     InvoicesService
   ) {}
 
-  @Get()
-  @Roles(
-    "ADMIN",
-    "FINANCE"
-  )
-  getInvoices(
-    @Req() req: any
-  ) {
 
-    return this.service.getInvoices(
-      req.user.tenantId
-    );
-  }
+@Get("summary")
+@Roles(
+  "ADMIN",
+  "FINANCE",
+)
+getInvoiceSummary(
+  @Req() req: any,
+) {
+
+  return this.service.getInvoiceSummary(
+    req.user.tenantId,
+  );
+
+}
+
+@Get("analytics")
+@Roles(
+  "ADMIN",
+  "FINANCE",
+)
+getInvoiceAnalytics(
+  @Req() req: any,
+) {
+
+  return this.service.getInvoiceAnalytics(
+    req.user.tenantId,
+  );
+
+}
+
+@Get("monthly-analytics")
+@Roles(
+  "ADMIN",
+  "FINANCE",
+)
+getMonthlyInvoiceAnalytics(
+  @Req() req: any,
+) {
+
+  return this.service.getMonthlyInvoiceAnalytics(
+    req.user.tenantId,
+  );
+
+}
+
+@Get(":id")
+@Roles(
+  "ADMIN",
+  "FINANCE",
+)
+getInvoiceById(
+  @Param("id") id: string,
+  @Req() req: any,
+) {
+
+  return this.service.getInvoiceById(
+
+    id,
+
+    req.user.tenantId,
+
+  );
+
+}
+
+@Get()
+@Roles(
+  "ADMIN",
+  "FINANCE",
+)
+getInvoices(
+  @Req() req: any,
+  @Query("search") search?: string,
+) {
+
+  return this.service.getInvoices(
+
+    req.user.tenantId,
+
+    search || "",
+
+  );
+
+}
+
 
   @Post()
   @Roles("ADMIN")

@@ -7,6 +7,7 @@ import {
   Param,
   Req,
   Body,
+  Query,
   UseGuards,
 } from "@nestjs/common";
 
@@ -50,21 +51,76 @@ export class VendorsController {
     VendorsService
   ) {}
 
-  // GET
-  @Get()
-  @Roles(
+
+@Get("summary")
+@Roles(
   "ADMIN",
   "MANAGER",
-  "FINANCE"
+  "FINANCE",
 )
-  getVendors(
-    @Req() req: any
-  ) {
+getVendorSummary(
+  @Req() req: any,
+) {
 
-    return this.service.getVendors(
-      req.user.tenantId
-    );
-  }
+  return this.service.getVendorSummary(
+    req.user.tenantId,
+  );
+
+}
+
+@Get("analytics")
+@Roles(
+  "ADMIN",
+  "MANAGER",
+  "FINANCE",
+)
+getVendorAnalytics(
+  @Req() req: any,
+) {
+
+  return this.service.getVendorAnalytics(
+    req.user.tenantId,
+  );
+
+}
+
+@Get("monthly-analytics")
+@Roles(
+  "ADMIN",
+  "MANAGER",
+  "FINANCE",
+)
+getMonthlyVendorAnalytics(
+  @Req() req: any,
+) {
+
+  return this.service.getMonthlyVendorAnalytics(
+    req.user.tenantId,
+  );
+
+}
+
+  // GET
+ @Get()
+@Roles(
+  "ADMIN",
+  "MANAGER",
+  "FINANCE",
+)
+getVendors(
+  @Req() req: any,
+  @Query("search") search?: string,
+) {
+
+  return this.service.getVendors(
+
+    req.user.tenantId,
+
+    search || "",
+
+  );
+
+}
 
   // CREATE
   @Post()
@@ -80,6 +136,28 @@ export class VendorsController {
   req.user.email
 );
   }
+
+@Get(":id")
+@Roles(
+  "ADMIN",
+  "MANAGER",
+  "FINANCE",
+)
+getVendorById(
+  @Param("id") id: string,
+  @Req() req: any,
+) {
+
+  return this.service.getVendorById(
+
+    id,
+
+    req.user.tenantId,
+
+  );
+
+}
+
 @Put(":id")
 @Roles("ADMIN")
 updateVendor(

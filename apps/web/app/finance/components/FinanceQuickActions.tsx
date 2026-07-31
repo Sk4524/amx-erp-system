@@ -125,122 +125,106 @@ export default function FinanceQuickActions({
 
         {/* FORM */}
 
-        <div className="mt-10 grid xl:grid-cols-[1.3fr_1fr_auto] gap-5">
+        <div className="mt-10 rounded-[30px] border border-emerald-100 bg-gradient-to-br from-emerald-50/60 via-white to-cyan-50/60 p-7">
 
-          <div>
+          <div className="flex items-center justify-between mb-6">
 
-            <label className="text-sm font-semibold text-slate-600 mb-2 block">
+            <div>
 
-              Transaction Amount
+              <p className="uppercase tracking-[0.25em] text-[11px] font-bold text-emerald-600">
 
-            </label>
+                QUICK ENTRY
 
-            <input
-              type="number"
-              placeholder="₹ Enter Amount"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 outline-none transition-all duration-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
-            />
+              </p>
 
-          </div>
+              <h3 className="mt-2 text-2xl font-black text-slate-900">
 
-          <div>
+                Record Financial Transaction
 
-            <label className="text-sm font-semibold text-slate-600 mb-2 block">
+              </h3>
 
-              Transaction Type
+            </div>
 
-            </label>
+            <div className="rounded-2xl bg-emerald-100 px-4 py-2 text-sm font-semibold text-emerald-700">
 
-            <select
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 outline-none transition-all duration-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
-            >
+              Real-time Sync
 
-              <option value="INCOME">
-
-                Income
-
-              </option>
-
-              <option value="EXPENSE">
-
-                Expense
-
-              </option>
-
-            </select>
+            </div>
 
           </div>
 
-          <div className="flex items-end">
-
-            <button
-              onClick={createTransaction}
-              className="w-full xl:w-auto rounded-2xl bg-gradient-to-r from-emerald-600 via-green-500 to-teal-400 px-8 py-4 text-white font-bold shadow-[0_15px_35px_rgba(16,185,129,.30)] hover:shadow-[0_20px_40px_rgba(16,185,129,.45)] hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3"
-            >
-
-              <CircleDollarSign size={22} />
-
-              Create Transaction
-
-            </button>
-
-          </div>
+          <div className="grid xl:grid-cols-[1.3fr_1fr_auto] gap-5"></div>
 
         </div>
 
-        {/* BOTTOM STATS */}
+
+        {/* LIVE STATUS */}
 
         <div className="grid sm:grid-cols-3 gap-5 mt-10">
 
-          <div className="rounded-2xl bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-100 p-5">
+          <div className="rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-5">
 
-            <p className="text-sm text-slate-500">
+            <div className="flex items-center justify-between">
 
-              Ledger Status
+              <p className="text-sm font-semibold text-slate-600">
+                Ledger
+              </p>
 
-            </p>
+              <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
 
-            <h3 className="mt-2 text-2xl font-black text-emerald-600">
+            </div>
 
+            <h3 className="mt-4 text-2xl font-black text-emerald-600">
               Active
-
             </h3>
+
+            <p className="mt-2 text-sm text-slate-500">
+              Entries are updating in real time.
+            </p>
 
           </div>
 
-          <div className="rounded-2xl bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-100 p-5">
+          <div className="rounded-3xl border border-cyan-100 bg-gradient-to-br from-cyan-50 to-white p-5">
 
-            <p className="text-sm text-slate-500">
+            <div className="flex items-center justify-between">
 
-              Accounting Engine
+              <p className="text-sm font-semibold text-slate-600">
+                Accounting Engine
+              </p>
 
-            </p>
+              <div className="w-3 h-3 rounded-full bg-cyan-500 animate-pulse" />
 
-            <h3 className="mt-2 text-2xl font-black text-cyan-600">
+            </div>
 
+            <h3 className="mt-4 text-2xl font-black text-cyan-600">
               Running
-
             </h3>
+
+            <p className="mt-2 text-sm text-slate-500">
+              Financial calculations are synchronized.
+            </p>
 
           </div>
 
-          <div className="rounded-2xl bg-gradient-to-r from-violet-50 to-fuchsia-50 border border-violet-100 p-5">
+          <div className="rounded-3xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-5">
 
-            <p className="text-sm text-slate-500">
+            <div className="flex items-center justify-between">
 
-              AI Sync
+              <p className="text-sm font-semibold text-slate-600">
+                AI Copilot
+              </p>
 
-            </p>
+              <div className="w-3 h-3 rounded-full bg-violet-500 animate-pulse" />
 
-            <h3 className="mt-2 text-2xl font-black text-violet-600">
+            </div>
 
-              Enabled
-
+            <h3 className="mt-4 text-2xl font-black text-violet-600">
+              Online
             </h3>
+
+            <p className="mt-2 text-sm text-slate-500">
+              Insights and recommendations are available.
+            </p>
 
           </div>
 

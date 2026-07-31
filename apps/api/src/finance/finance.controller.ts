@@ -51,17 +51,52 @@ export class FinanceController {
 
   // GET TRANSACTIONS
   @Get("transactions")
-  @Roles("ADMIN", "FINANCE")
-  getTransactions(
-    @Req() req: any,
-    @Query("search") search?: string
-  ) {
+@Roles("ADMIN", "FINANCE")
+getTransactions(
+      @Req() req: any,
 
-    return this.service.getTransactions(
-      req.user.tenantId,
-      search || ""
-    );
-  }
+    @Query("search")
+    search?: string,
+
+    @Query("fromDate")
+    fromDate?: string,
+
+    @Query("toDate")
+    toDate?: string,
+
+    @Query("type")
+    type?: string,
+
+    @Query("accountId")
+    accountId?: string,
+
+    @Query("minAmount")
+    minAmount?: string,
+
+    @Query("maxAmount")
+    maxAmount?: string,
+
+    @Query("sortBy")
+    sortBy?: string,
+) {
+
+  return this.service.getTransactions(
+
+  req.user.tenantId,
+
+  {
+    search: search || "",
+    fromDate,
+    toDate,
+    type,
+    accountId,
+    minAmount,
+    maxAmount,
+    sortBy,
+  },
+
+);
+}
 
 // CREATE TRANSACTION
 @Post("transactions")
@@ -147,6 +182,98 @@ deleteAccount(
     req.user.tenantId,
     req.user.email,
   );
+}
+@Get("dashboard")
+@Roles("ADMIN", "FINANCE")
+getDashboard(
+  @Req() req: any,
+) {
+  return this.service.getFinanceSummary(
+    req.user.tenantId,
+  );
+}
+
+@Get("analytics")
+@Roles("ADMIN", "FINANCE")
+getAnalytics(
+  @Req() req: any,
+) {
+
+  return this.service.getAnalytics(
+    req.user.tenantId,
+  );
+
+}
+
+@Get("trial-balance")
+@Roles("ADMIN", "FINANCE")
+getTrialBalance(
+  @Req() req: any,
+) {
+
+  return this.service.getTrialBalance(
+    req.user.tenantId,
+  );
+
+}
+@Get("profit-loss")
+@Roles("ADMIN", "FINANCE")
+getProfitAndLoss(
+  @Req() req: any,
+) {
+
+  return this.service.getProfitAndLoss(
+    req.user.tenantId,
+  );
+
+}
+
+@Get("balance-sheet")
+@Roles("ADMIN", "FINANCE")
+getBalanceSheet(
+  @Req() req: any,
+) {
+
+  return this.service.getBalanceSheet(
+    req.user.tenantId,
+  );
+
+}
+
+@Get("cash-flow")
+@Roles("ADMIN", "FINANCE")
+getCashFlow(
+  @Req() req: any,
+) {
+
+  return this.service.getCashFlow(
+    req.user.tenantId,
+  );
+
+}
+
+@Get("monthly-analytics")
+@Roles("ADMIN", "FINANCE")
+getMonthlyAnalytics(
+  @Req() req: any,
+) {
+
+  return this.service.getMonthlyAnalytics(
+    req.user.tenantId,
+  );
+
+}
+
+@Get("kpis")
+@Roles("ADMIN", "FINANCE")
+getFinanceKPIs(
+  @Req() req: any,
+) {
+
+  return this.service.getFinanceKPIs(
+    req.user.tenantId,
+  );
+
 }
 
   // CREATE ACCOUNT

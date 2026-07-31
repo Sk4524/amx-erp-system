@@ -62,7 +62,7 @@ export default function LedgerTable({
               className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-green-500 text-white px-5 py-3 font-semibold hover:scale-105 transition-all"
             >
 
-              <Download size={18}/>
+              <Download size={18} />
 
               Export CSV
 
@@ -72,25 +72,37 @@ export default function LedgerTable({
               className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-red-500 to-rose-500 text-white px-5 py-3 font-semibold hover:scale-105 transition-all"
             >
 
-              <Download size={18}/>
+              <Download size={18} />
 
               Export PDF
 
             </button>
 
-            <div className="bg-gradient-to-r from-indigo-500 to-blue-500 text-white rounded-3xl px-6 py-4 min-w-[180px]">
+            <div className="grid grid-cols-2 gap-3">
 
-              <p className="text-indigo-100 text-sm">
+              <div className="rounded-3xl bg-gradient-to-r from-indigo-500 to-blue-500 text-white px-6 py-5 min-w-[170px]">
 
-                Ledger Entries
+                <p className="text-indigo-100 text-sm">
+                  Entries
+                </p>
 
-              </p>
+                <h2 className="text-3xl font-black mt-2">
+                  {ledger.length}
+                </h2>
 
-              <h2 className="text-3xl font-black mt-1">
+              </div>
 
-                {ledger.length}
+              <div className="rounded-3xl bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white px-6 py-5 min-w-[170px]">
 
-              </h2>
+                <p className="text-violet-100 text-sm">
+                  Status
+                </p>
+
+                <h2 className="text-2xl font-black mt-3">
+                  Balanced
+                </h2>
+
+              </div>
 
             </div>
 
@@ -171,43 +183,83 @@ export default function LedgerTable({
 
               <tbody>
 
-                {ledger.map((item:any,index:number)=>(
+                {ledger.map((item: any, index: number) => (
 
                   <motion.tr
 
                     key={item.id}
 
                     initial={{
-                      opacity:0,
-                      y:15
+                      opacity: 0,
+                      y: 15
                     }}
 
                     animate={{
-                      opacity:1,
-                      y:0
+                      opacity: 1,
+                      y: 0
                     }}
 
                     transition={{
-                      delay:index*.03
+                      delay: index * .03
                     }}
 
-                    className="border-b border-slate-100 hover:bg-indigo-50/40 transition-all duration-300"
-
+                    className="border-b border-slate-100 hover:bg-indigo-50/40 hover:shadow-md hover:scale-[1.003] transition-all duration-300"
                   >
 
-                    <td className="px-8 py-6 font-semibold text-slate-800">
-
-                      {item.description}
-
-                    </td>
-
                     <td className="px-8 py-6">
 
-                      <div className="inline-flex items-center gap-2 rounded-full bg-red-100 text-red-600 px-4 py-2 font-bold">
+                      <div className="flex items-center gap-4">
 
-                        <ArrowDownCircle size={18}/>
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 via-violet-500 to-blue-500 text-white flex items-center justify-center shadow-lg">
 
-                        ₹{Number(item.debit).toLocaleString()}
+                          <BookOpen size={22} />
+
+                        </div>
+
+                        <div>
+
+                          <p className="uppercase tracking-[0.18em] text-[10px] font-bold text-indigo-500">
+
+                            Ledger Entry
+
+                          </p>
+
+                          <h3 className="mt-1 text-lg font-black text-slate-900">
+
+                            {item.description}
+
+                          </h3>
+
+                        </div>
+
+                      </div>
+
+                    </td>
+                    <td className="px-8 py-6">
+
+                      <div className="inline-flex items-center gap-3 rounded-2xl border border-red-200 bg-gradient-to-r from-red-50 to-rose-50 px-5 py-3 shadow-sm">
+
+                        <div className="w-10 h-10 rounded-xl bg-red-500 text-white flex items-center justify-center">
+
+                          <ArrowDownCircle size={18} />
+
+                        </div>
+
+                        <div>
+
+                          <p className="text-[10px] uppercase tracking-[0.18em] text-red-500 font-bold">
+
+                            Debit
+
+                          </p>
+
+                          <h4 className="font-black text-red-600">
+
+                            ₹{Number(item.debit).toLocaleString()}
+
+                          </h4>
+
+                        </div>
 
                       </div>
 
@@ -215,27 +267,64 @@ export default function LedgerTable({
 
                     <td className="px-8 py-6">
 
-                      <div className="inline-flex items-center gap-2 rounded-full bg-green-100 text-green-600 px-4 py-2 font-bold">
+                      <div className="inline-flex items-center gap-3 rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-green-50 px-5 py-3 shadow-sm">
 
-                        <ArrowUpCircle size={18}/>
+                        <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center">
 
-                        ₹{Number(item.credit).toLocaleString()}
+                          <ArrowUpCircle size={18} />
+
+                        </div>
+
+                        <div>
+
+                          <p className="text-[10px] uppercase tracking-[0.18em] text-emerald-600 font-bold">
+
+                            Credit
+
+                          </p>
+
+                          <h4 className="font-black text-emerald-600">
+
+                            ₹{Number(item.credit).toLocaleString()}
+
+                          </h4>
+
+                        </div>
 
                       </div>
 
                     </td>
 
-                    <td className="px-8 py-6 text-gray-600">
+                    <td className="px-8 py-6">
 
-                      {item.reference || "-"}
+                      <span className="inline-flex items-center rounded-2xl bg-slate-100 border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700">
+
+                        {item.reference || "N/A"}
+
+                      </span>
 
                     </td>
 
-                    <td className="px-8 py-6 text-gray-500">
+                    <td className="px-8 py-6">
 
-                      {new Date(
-                        item.createdAt
-                      ).toLocaleDateString()}
+                      <div>
+
+                        <p className="font-bold text-slate-900">
+
+                          {new Date(item.createdAt).toLocaleDateString()}
+
+                        </p>
+
+                        <p className="text-xs text-slate-500 mt-1">
+
+                          {new Date(item.createdAt).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+
+                        </p>
+
+                      </div>
 
                     </td>
 

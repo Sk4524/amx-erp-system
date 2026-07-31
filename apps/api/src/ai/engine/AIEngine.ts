@@ -3,8 +3,8 @@ import { getPrompt } from "./PromptManager";
 import { buildContext } from "./ContextManager";
 import { formatResponse }
 from "./ResponseFormatter";
+import { HandlerRegistry } from "../handlers/HandlerRegistry";
 
-import { CFOService } from "../services/CFO.service";
 
 export async function runAI(
 
@@ -23,45 +23,56 @@ export async function runAI(
 ) {
 
     // Detect user intent
-    const intent =
-        detectIntent(question);
+    const result =
+    detectIntent(question);
+
+const intent =
+    result.intent;
+
+    const registry =
+    new HandlerRegistry();
 
     // Select prompt
-    const prompt =
-        getPrompt(intent);
+   const handler =
+    registry.getHandler(intent);
 
-    // Build only required context
-    const context =
-        buildContext(
+const prompt =
+    handler
+        ? handler.getPrompt()
+        : getPrompt(intent);
 
-            intent,
-
-            dashboard,
-
-            question
-
-        );
-
+const context =
+    handler
+        ? handler.buildContext(
+              dashboard,
+              question
+          )
+        : buildContext(
+              intent,
+              dashboard,
+              question
+          );
     // Call LLM
   let raw: string | null = null;
 
 switch (intent) {
 
-    case "finance":
+   case "finance": {
 
-        raw = await new CFOService(
+    const handler =
+        registry.getHandler("finance");
 
-            askAI
+    raw =
+        handler
+            ? await handler.execute(
+                  question,
+                  dashboard,
+                  askAI
+              )
+            : "";
 
-        ).analyze(
-
-            dashboard,
-
-            question
-
-        );
-
-        break;
+    break;
+}
 
     default:
 
