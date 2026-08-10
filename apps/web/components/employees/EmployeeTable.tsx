@@ -4,6 +4,7 @@ interface Props {
   loading: boolean;
   employees: any[];
   role: string;
+  onView: (employee: any) => void;
   onEdit: (employee: any) => void;
   onDelete: (id: string, name: string) => void;
 }
@@ -12,6 +13,7 @@ export default function EmployeeTable({
   loading,
   employees,
   role,
+  onView,
   onEdit,
   onDelete,
 }: Props) {
@@ -139,8 +141,8 @@ export default function EmployeeTable({
 
               <span
                 className={`px-3 py-1 rounded-full text-xs font-bold ${emp.status === "ACTIVE"
-                    ? "bg-green-100 text-green-700"
-                    : "bg-red-100 text-red-700"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
                   }`}
               >
                 {emp.status ?? "ACTIVE"}
@@ -161,6 +163,13 @@ export default function EmployeeTable({
               {(role === "ADMIN" || role === "HR") ? (
 
                 <div className="flex gap-2">
+
+                  <button
+                    onClick={() => onView(emp)}
+                    className="bg-slate-100 text-slate-700 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-slate-200"
+                  >
+                    View
+                  </button>
 
                   <button
                     onClick={() => onEdit(emp)}

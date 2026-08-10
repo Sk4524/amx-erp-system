@@ -5,10 +5,13 @@ import {
   FiUsers,
 
 } from "react-icons/fi";
+
 import EmployeeFormModal from "../../components/employees/EmployeeFormModal";
 import EmployeeStats from "../../components/employees/EmployeeStats";
 import useRole from "../../lib/useRole";
 import EmployeeTable from "../../components/employees/EmployeeTable";
+import PendingEmployees from "../../components/employees/PendingEmployees";
+import EmployeeProfileModal from "../../components/employees/EmployeeProfileModal";
 import { motion } from "framer-motion";
 import Sidebar from "../../components/Sidebar";
 import AuthGuard from "../../components/AuthGuard";
@@ -45,7 +48,11 @@ export default function EmployeesPage() {
     setDebouncedSearch] =
     useState("");
 
+  const [selectedEmployee, setSelectedEmployee] =
+    useState<any>(null);
 
+  const [profileOpen, setProfileOpen] =
+    useState(false);
   const [search, setSearch] = useState("");
 
   const {
@@ -404,81 +411,88 @@ export default function EmployeesPage() {
             totalPayroll={totalPayroll}
           />
 
-          {/* ADMIN FORM */}
-          <EmployeeFormModal
-            editingId={editingId}
-            name={name}
-            setName={setName}
-            email={email}
-            setEmail={setEmail}
-            phone={phone}
-            setPhone={setPhone}
-            department={department}
-            setDepartment={setDepartment}
-            designation={designation}
-            setDesignation={setDesignation}
-            employmentType={employmentType}
-            setEmploymentType={setEmploymentType}
-            salary={salary}
-            setSalary={setSalary}
-            joiningDate={joiningDate}
-            setJoiningDate={setJoiningDate}
-            saving={saving}
-            onSubmit={() => {
-              if (editingId) {
-                updateEmployee();
-              } else {
-                addEmployee();
-              }
-            }}
-            onCancel={() => {
-              setEditingId("");
+          {/* PENDING EMPLOYEES */}
+          {(role === "ADMIN" || role === "HR") && (
+            <PendingEmployees
+              refreshEmployees={fetchEmployees}
+            />
+          )}
 
-              setName("");
-              setEmail("");
-              setPhone("");
-              setDepartment("");
-              setDesignation("");
-              setEmploymentType("FULL_TIME");
-              setSalary("");
-              setJoiningDate("");
-            }}
-          />
+          {/* ADMIN FORM */}
+          <div className="flex justify-end mt-10">
+            <EmployeeFormModal
+              editingId={editingId}
+              name={name}
+              setName={setName}
+              email={email}
+              setEmail={setEmail}
+              phone={phone}
+              setPhone={setPhone}
+              department={department}
+              setDepartment={setDepartment}
+              designation={designation}
+              setDesignation={setDesignation}
+              employmentType={employmentType}
+              setEmploymentType={setEmploymentType}
+              salary={salary}
+              setSalary={setSalary}
+              joiningDate={joiningDate}
+              setJoiningDate={setJoiningDate}
+              saving={saving}
+              onSubmit={() => {
+                if (editingId) {
+                  updateEmployee();
+                } else {
+                  addEmployee();
+                }
+              }}
+              onCancel={() => {
+                setEditingId("");
+
+                setName("");
+                setEmail("");
+                setPhone("");
+                setDepartment("");
+                setDesignation("");
+                setEmploymentType("FULL_TIME");
+                setSalary("");
+                setJoiningDate("");
+              }}
+            />
+          </div>
 
           {/* TABLE */}
           <EmployeeTable
             loading={loading}
             employees={employees}
             role={role}
-            onEdit={(emp) => {
 
+            onView={(employee) => {
+              setSelectedEmployee(employee);
+              setProfileOpen(true);
+            }}
+
+            onEdit={(emp) => {
               setEditingId(emp.id);
 
               setName(emp.name || "");
-
               setEmail(emp.email || "");
-
               setPhone(emp.phone || "");
-
               setDepartment(emp.department || "");
-
               setDesignation(emp.designation || "");
-
               setEmploymentType(
                 emp.employmentType || "FULL_TIME"
               );
 
-              setSalary(
-                String(emp.salary || "")
-              );
+              setSalary(String(emp.salary || ""));
 
               setJoiningDate(
                 emp.joiningDate
                   ? emp.joiningDate.slice(0, 10)
                   : ""
               );
-
             }}
+
             onDelete={(id, employeeName) => {
               const confirmDelete = window.confirm(
                 `Delete employee "${employeeName}" ?`
@@ -487,6 +501,15 @@ export default function EmployeesPage() {
               if (confirmDelete) {
                 deleteEmployee(id);
               }
+            }}
+          />
+
+          <EmployeeProfileModal
+            open={profileOpen}
+            employee={selectedEmployee}
+            onClose={() => {
+              setProfileOpen(false);
+              setSelectedEmployee(null);
             }}
           />
 

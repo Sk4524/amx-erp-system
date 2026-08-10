@@ -36,7 +36,6 @@ constructor(
   toDate?: string;
 
   type?: string;
-  accountId?: string;
 
   minAmount?: string;
   maxAmount?: string;
@@ -109,11 +108,6 @@ if (filters.type) {
 
 }
 
-if (filters.accountId) {
-
-  where.accountId = filters.accountId;
-
-}
 
 if (filters.minAmount || filters.maxAmount) {
 
@@ -172,169 +166,195 @@ if (filters.minAmount || filters.maxAmount) {
 
 
   // CREATE TRANSACTION
-  async createTransaction(
+async createTransaction(
   data: any,
   tenantId: string,
-  userEmail = "SYSTEM"
-) 
-{const mainAccount =
-  await this.prisma.account.findFirst({
-    where: {
-      tenantId,
-    },
-  });
+  userEmail = "SYSTEM",
+) {
 
-if (!mainAccount) {
-  throw new Error(
-    "Main account not found"
-  );
-}
+  try {
 
-    try {
+    const transaction =
+      await this.prisma.$transaction(async (tx) => {
 
-      console.log(
-        "TRANSACTION DATA:",
-        data
-      );
+        const mainAccount =
+          await tx.account.findFirst({
 
-      console.log(
-        "TENANT ID:",
-        tenantId
-      );
+            where: {
+              tenantId,
+            },
 
-      // CREATE TRANSACTION
-      const transaction =
-        await this.prisma.transaction.create({
+          });
+
+        if (!mainAccount) {
+
+          throw new Error(
+            "Main account not found",
+          );
+
+        }
+
+        const createdTransaction =
+          await tx.transaction.create({
+
+            data: {
+
+              amount:
+                Number(data.amount),
+
+              type:
+                data.type,
+
+              description:
+                data.description || "",
+
+              accountId:
+                mainAccount.id,
+
+              tenantId,
+
+            },
+
+          });
+
+        await tx.account.update({
+
+          where: {
+
+            id: mainAccount.id,
+
+          },
 
           data: {
 
-            amount:
-              Number(data.amount),
+            balance:
 
-            type:
-              data.type,
+              data.type === "INCOME"
 
-            accountId:
-  mainAccount.id,
+                ? {
 
-            tenantId,
+                    increment:
+                      Number(data.amount),
+
+                  }
+
+                : {
+
+                    decrement:
+                      Number(data.amount),
+
+                  },
+
           },
+
         });
-await this.prisma.account.update({
-  where: {
-    id: mainAccount.id,
-  },
 
-  data: {
-    balance:
-      data.type === "INCOME"
-        ? {
-            increment:
-              Number(data.amount),
-          }
-        : {
-            decrement:
-              Number(data.amount),
-          },
-  },
-});
-      console.log(
-        "TRANSACTION CREATED:",
-        transaction
-      );
-
-      // CREATE LEDGER ENTRY
-      const ledger =
-        await this.prisma.ledger.create({
+        await tx.ledger.create({
 
           data: {
 
             description:
+
+              data.description ||
+
               `${data.type} Transaction`,
 
             debit:
+
               data.type === "EXPENSE"
+
                 ? Number(data.amount)
+
                 : 0,
 
             credit:
+
               data.type === "INCOME"
+
                 ? Number(data.amount)
+
                 : 0,
 
             transactionId:
-              transaction.id,
-accountId:
-  mainAccount.id,
+              createdTransaction.id,
+
+            accountId:
+              mainAccount.id,
 
             tenantId,
 
             reference:
               data.reference || "",
+
           },
+
         });
 
-      console.log(
-        "LEDGER CREATED:",
-        ledger
-      );
-// AUDIT LOG
-await this.auditService.createLog({
+        return createdTransaction;
 
-  action: "CREATE",
+      });
 
-  module: "FINANCE",
+    await this.auditService.createLog({
 
-  description:
-    `Created ${transaction.type} transaction of ₹${transaction.amount}`,
+      action: "CREATE",
 
-  userEmail,
+      module: "FINANCE",
 
-  tenantId,
-});
+      description:
+        `Created ${transaction.type} transaction of ₹${transaction.amount}`,
 
-// REALTIME EVENTS
+      userEmail,
 
-this.realtimeGateway.financeUpdated({
+      tenantId,
 
-  type:
-    transaction.type,
+    });
 
-  amount:
-    transaction.amount,
+    this.realtimeGateway.financeUpdated({
 
-  transactionId:
-    transaction.id,
-});
+      type:
+        transaction.type,
 
-this.realtimeGateway.dashboardRefresh();
+      amount:
+        transaction.amount,
 
-this.realtimeGateway.sendNotification({
+      transactionId:
+        transaction.id,
 
-  title:
-    "Finance Updated",
+    });
 
-  message:
-    `${transaction.type} transaction of ₹${transaction.amount} created.`,
-});
-      return {
-  success: true,
-  message: "Transaction created",
-  data: transaction,
-};
+    this.realtimeGateway.dashboardRefresh();
 
-    } catch (error) {
+    this.realtimeGateway.sendNotification({
 
-  console.log(
-    "FINANCE CREATE ERROR:"
-  );
+      title:
+        "Finance Updated",
 
-  console.error(error);
+      message:
+        `${transaction.type} transaction of ₹${transaction.amount} created.`,
 
-  throw error;
-}
+    });
+
+    return {
+
+      success: true,
+
+      message:
+        "Transaction created",
+
+      data:
+        transaction,
+
+    };
+
+  } catch (error) {
+
+    console.error(error);
+
+    throw error;
+
   }
 
+}
 
   // DELETE TRANSACTION
  async deleteTransaction(
@@ -450,7 +470,18 @@ async createAccount(
   tenantId: string,
   userEmail = "SYSTEM"
 ){
+const existingAccount =
+  await this.prisma.account.findFirst({
+    where: {
+      tenantId,
+    },
+  });
 
+if (existingAccount) {
+  throw new Error(
+    "Main company account already exists."
+  );
+}
   const account =
     await this.prisma.account.create({
 
@@ -978,6 +1009,18 @@ const account =
     );
 
   }
+  const totalAccounts =
+  await this.prisma.account.count({
+    where: {
+      tenantId,
+    },
+  });
+
+if (totalAccounts === 1) {
+  throw new Error(
+    "Main company account cannot be deleted."
+  );
+}
 
 if (
 

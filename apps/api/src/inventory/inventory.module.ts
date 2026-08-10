@@ -9,7 +9,7 @@ from "./inventory.service";
 import { InventoryController }
 from "./inventory.controller";
 
-
+import { FinanceModule } from "../finance/finance.module";
 import { AuditModule }
 from "../audit/audit.module";
 
@@ -29,7 +29,7 @@ from "../prisma/prisma.module";
     PrismaModule,
 
     AuditModule,
-
+    FinanceModule,
     RealtimeModule,
 
     NotificationsModule,

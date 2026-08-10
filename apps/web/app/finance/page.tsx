@@ -19,7 +19,6 @@ import {
   useCallback,
   useRef,
 } from "react";
-import ExecutiveFinanceSummary from "./components/ExecutiveFinanceSummary";
 import FinanceSkeleton from "./components/FinanceSkeleton";
 import api from "../../lib/api";
 import FinanceActivity from "./components/FinanceActivity";
@@ -43,10 +42,6 @@ export default function FinancePage() {
 
   const [receivables,
     setReceivables] =
-    useState<any[]>([]);
-
-  const [accounts,
-    setAccounts] =
     useState<any[]>([]);
 
   const [vendors,
@@ -95,10 +90,6 @@ export default function FinancePage() {
     useState("");
   const [transactionType, setTransactionType] =
     useState("");
-
-  const [selectedAccount, setSelectedAccount] =
-    useState("");
-
   const [minAmount, setMinAmount] =
     useState("");
 
@@ -188,9 +179,6 @@ export default function FinancePage() {
         params.append("type", transactionType);
       }
 
-      if (selectedAccount) {
-        params.append("accountId", selectedAccount);
-      }
 
       if (minAmount) {
         params.append("minAmount", minAmount);
@@ -224,7 +212,6 @@ export default function FinancePage() {
     fromDate,
     toDate,
     transactionType,
-    selectedAccount,
     minAmount,
     maxAmount,
     sortBy,
@@ -310,30 +297,6 @@ export default function FinancePage() {
     } catch (err) {
 
       console.error(err);
-
-    }
-
-  }, []);
-
-  // FETCH ACCOUNTS
-  const fetchAccounts = useCallback(async () => {
-
-    try {
-
-      const res =
-        await api.get(
-          "/finance/accounts"
-        );
-
-      setAccounts(
-        res.data.data || []
-      );
-
-    } catch (err) {
-
-      console.error(err);
-
-      setAccounts([]);
 
     }
 
@@ -473,7 +436,6 @@ export default function FinancePage() {
         fetchMonthlyAnalytics(),
         fetchFinanceKPIs(),
         fetchFinancialReports(),
-        fetchAccounts(),
         fetchPayables(),
         fetchReceivables(),
         fetchCustomers(),
@@ -513,7 +475,6 @@ export default function FinancePage() {
     fetchMonthlyAnalytics,
     fetchFinanceKPIs,
     fetchFinancialReports,
-    fetchAccounts,
     fetchPayables,
     fetchReceivables,
     fetchCustomers,
@@ -544,7 +505,6 @@ export default function FinancePage() {
         fetchFinanceKPIs(),
         fetchFinancialReports(),
         fetchLedger(),
-        fetchAccounts(),
         fetchPayables(),
         fetchReceivables(),
         fetchVendors(),
@@ -573,7 +533,6 @@ export default function FinancePage() {
       fetchFinanceKPIs,
       fetchFinancialReports,
       fetchLedger,
-      fetchAccounts,
       fetchPayables,
       fetchReceivables,
       fetchVendors,
@@ -970,11 +929,6 @@ if (!role) {
             transactionType={transactionType}
             setTransactionType={setTransactionType}
 
-            selectedAccount={selectedAccount}
-            setSelectedAccount={setSelectedAccount}
-
-            accounts={accounts}
-
             minAmount={minAmount}
             maxAmount={maxAmount}
 
@@ -990,7 +944,6 @@ if (!role) {
               setToDate("");
 
               setTransactionType("");
-              setSelectedAccount("");
 
               setMinAmount("");
               setMaxAmount("");
@@ -1002,13 +955,6 @@ if (!role) {
             }}
           />
 
-
-          <div className="mb-10">
-            <ExecutiveFinanceSummary
-              financeKPIs={financeKPIs}
-            />
-          </div>
-
           {/* ANALYTICS */}
           <div className="mb-10">
             <FinanceKPIs
@@ -1016,7 +962,7 @@ if (!role) {
               expense={financeKPIs.totalExpense}
               profit={financeKPIs.netProfit}
               cashBalance={financeKPIs.accountBalance}
-              accounts={accounts.length}
+              
               payables={financeKPIs.pendingPayables}
               receivables={financeKPIs.pendingReceivables}
             />

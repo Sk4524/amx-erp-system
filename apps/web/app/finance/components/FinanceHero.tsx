@@ -23,11 +23,6 @@ interface FinanceHeroProps {
   transactionType: string;
   setTransactionType: (value: string) => void;
 
-  selectedAccount: string;
-  setSelectedAccount: (value: string) => void;
-
-  accounts: any[];
-
   minAmount: string;
   maxAmount: string;
 
@@ -66,10 +61,6 @@ export default function FinanceHero({
   transactionType,
   setTransactionType,
 
-  selectedAccount,
-  setSelectedAccount,
-
-  accounts,
 
   minAmount,
   maxAmount,
@@ -334,7 +325,7 @@ export default function FinanceHero({
               />
 
             </div>
-            <div className="grid grid-cols-2 gap-3 mt-4">
+            <div className="grid grid-cols-1 gap-3 mt-4">
 
               <select
                 value={transactionType}
@@ -355,29 +346,30 @@ export default function FinanceHero({
                   Expense
                 </option>
               </select>
+              <div className="rounded-2xl bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border border-emerald-400/20 px-5 py-3 flex items-center justify-between">
 
-              <select
-                value={selectedAccount}
-                onChange={(e) =>
-                  setSelectedAccount(e.target.value)
-                }
-                className="rounded-2xl bg-white/10 border border-white/10 py-3 px-4 text-white"
-              >
-                <option value="">All Accounts</option>
+                <div>
 
-                {accounts.map((account: any) => (
+                  <p className="text-[11px] uppercase tracking-wider text-emerald-300">
 
-                  <option
-                    key={account.id}
-                    value={account.id}
-                    style={{ color: "black" }}
-                  >
-                    {account.name}
-                  </option>
+                    Business Account
 
-                ))}
+                  </p>
 
-              </select>
+                  <h3 className="font-bold text-white">
+
+                    Main Company Account
+
+                  </h3>
+
+                </div>
+
+                <Landmark
+                  size={22}
+                  className="text-emerald-300"
+                />
+
+              </div>
 
             </div>
 

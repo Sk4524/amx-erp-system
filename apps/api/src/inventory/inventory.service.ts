@@ -8,7 +8,7 @@ import { PrismaService } from "../prisma/prisma.service";
 
 import { CreateInventoryDto } from "./dto/create-inventory.dto";
 import { UpdateInventoryDto } from "./dto/update-inventory.dto";
-
+import { FinanceService } from "../finance/finance.service";
 import { EventEmitter2 }
 from "@nestjs/event-emitter";
 
@@ -26,23 +26,13 @@ from "../realtime/realtime.gateway";
 @Injectable()
 export class InventoryService {
 constructor(
-
-  private prisma:
-  PrismaService,
-
-  private eventEmitter:
-  EventEmitter2,
-
-  private auditService:
-  AuditService,
-
-  private realtimeGateway:
-  RealtimeGateway,
-
-  private notificationsService:
-  NotificationsService
-
-) {}
+  private prisma: PrismaService,
+  private eventEmitter: EventEmitter2,
+  private auditService: AuditService,
+  private realtimeGateway: RealtimeGateway,
+  private notificationsService: NotificationsService,
+  private financeService: FinanceService,
+) {} 
 
   // GET ALL INVENTORY
   async getAll(
@@ -53,15 +43,36 @@ constructor(
     const items =
   await this.prisma.inventory.findMany({
 
-    where: {
+   where: {
 
-      tenantId,
+  tenantId,
 
+  OR: [
+
+    {
       productName: {
         contains: search,
         mode: "insensitive",
       },
     },
+
+    {
+      sku: {
+        contains: search,
+        mode: "insensitive",
+      },
+    },
+
+    {
+      category: {
+        contains: search,
+        mode: "insensitive",
+      },
+    },
+
+  ],
+
+},
 
     orderBy: {
       createdAt: "desc",
@@ -161,7 +172,16 @@ if (existingSku) {
       tenantId,
     },
   });
-
+// Create initial stock movement
+await this.prisma.stockMovement.create({
+  data: {
+    type: "ITEM_CREATED",
+    productName: item.productName,
+    quantity: item.quantity,
+    reference: item.sku,
+    tenantId,
+  },
+});
 this.realtimeGateway
   .inventoryUpdated({
 
@@ -297,6 +317,29 @@ async delete(
   "Inventory item not found"
 );
   }
+  if (existing.quantity > 0) {
+  throw new BadRequestException(
+    "Cannot delete inventory with available stock. Reduce quantity to zero first."
+  );
+}
+
+await this.prisma.stockMovement.create({
+
+  data: {
+
+    type: "ITEM_DELETED",
+
+    productName: existing.productName,
+
+    quantity: existing.quantity,
+
+    reference: existing.sku,
+
+    tenantId,
+
+  },
+
+});
   const item =
     await this.prisma.inventory.delete({
 
@@ -428,7 +471,7 @@ if (data.sku) {
     );
   }
 }
-
+const oldQuantity = existing.quantity;
   const item =
     await this.prisma.inventory.update({
 
@@ -436,7 +479,40 @@ if (data.sku) {
 
       data,
     });
+    const previousValue =
+    existing.quantity * existing.price;
 
+const newValue =
+    item.quantity * item.price;
+
+const difference =
+    newValue - previousValue;
+
+if (difference !== 0) {
+
+    this.realtimeGateway.financeUpdated({
+
+        type: "INVENTORY_VALUE_CHANGED",
+
+        amount: difference,
+
+    });
+
+}
+if (
+  data.quantity !== undefined &&
+  data.quantity !== oldQuantity
+) {
+  await this.prisma.stockMovement.create({
+    data: {
+      type: "STOCK_ADJUSTMENT",
+      productName: item.productName,
+      quantity: Math.abs(item.quantity - oldQuantity),
+      reference: item.sku,
+      tenantId,
+    },
+  });
+}
   await this.notificationsService
     .create(
 
@@ -454,8 +530,31 @@ if (data.sku) {
 item.tenantId
 );
 
-  this.realtimeGateway
-  .dashboardRefresh();
+if (item.quantity === 0) {
+
+  await this.notificationsService.create(
+    {
+      title: "Out Of Stock",
+      message: `${item.productName} is now out of stock.`,
+      type: "DANGER",
+    },
+    tenantId,
+  );
+
+} else if (item.quantity <= 5) {
+
+  await this.notificationsService.create(
+    {
+      title: "Low Stock",
+      message: `${item.productName} has only ${item.quantity} items left.`,
+      type: "WARNING",
+    },
+    tenantId,
+  );
+
+}
+
+  this.realtimeGateway.dashboardRefresh();
 
 await this.auditService.createLog({
 
@@ -629,58 +728,93 @@ throw new NotFoundException(
 );
   }
 
-  // UPDATE INVENTORY STOCK
-  await this.prisma.inventory.update({
+ const [, completedOrder] =
+  await this.prisma.$transaction(async (tx) => {
 
-    where: {
-      id:
-        existingInventory.id,
-    },
+    const inventory =
+      await tx.inventory.update({
 
-    data: {
+        where: {
+          id: existingInventory.id,
+        },
 
-      quantity: {
+        data: {
 
-        increment:
-          order.quantity,
-      },
-    },
-  });
+          quantity: {
 
-  // UPDATE ORDER STATUS
-  const completedOrder =
-    await this.prisma.purchaseOrder.update({
+            increment: order.quantity,
 
-      where: {
-        id,
-      },
+          },
+
+        },
+
+      });
+
+    const purchaseOrder =
+      await tx.purchaseOrder.update({
+
+        where: {
+
+          id,
+
+        },
+
+        data: {
+
+          status: "COMPLETED",
+
+        },
+
+      });
+
+    await tx.stockMovement.create({
 
       data: {
-        status: "COMPLETED",
+
+        type: "PURCHASE_RECEIVED",
+
+        productName: order.productName,
+
+        quantity: order.quantity,
+
+        reference: order.id,
+
+        tenantId: order.tenantId,
+
       },
+
     });
 
-  // STOCK MOVEMENT
-  await this.prisma.stockMovement.create({
+    return [
 
-    data: {
+      inventory,
 
-      type:
-        "PURCHASE_RECEIVED",
+      purchaseOrder,
 
-      productName:
-        order.productName,
+    ];
 
-      quantity:
-        order.quantity,
-
-      reference:
-        order.id,
-
-      tenantId:
-        order.tenantId,
-    },
   });
+
+await this.financeService.createTransaction({
+    amount: order.quantity * order.price,
+
+    type: "EXPENSE",
+
+    description:
+        `Inventory Purchase : ${order.productName}`,
+
+    reference: order.id,
+
+    source: "INVENTORY",
+
+    category: "PURCHASE_ORDER",
+
+}, tenantId, userEmail);
+
+this.realtimeGateway.financeUpdated({
+  type: "PURCHASE_EXPENSE",
+  amount: order.quantity * order.price,
+});
 
   await this.notificationsService
   .create(
@@ -709,8 +843,23 @@ this.realtimeGateway
       order.productName,
   });
 
-this.realtimeGateway
-  .dashboardRefresh();
+this.realtimeGateway.inventoryUpdated({
+
+  action: "PURCHASE_RECEIVED",
+
+  product: order.productName,
+
+});
+
+this.realtimeGateway.financeUpdated({
+
+  type: "PURCHASE_EXPENSE",
+
+  amount: order.quantity * order.price,
+
+});
+
+this.realtimeGateway.dashboardRefresh();
 
 await this.auditService.createLog({
 
@@ -819,23 +968,61 @@ async getInventorySummary(
       0,
     );
 
+  const averageStock =
+    totalProducts === 0
+        ? 0
+        : Number(
+            (totalStock / totalProducts).toFixed(2),
+       );
+
+const averageItemCost =
+  totalProducts === 0
+    ? 0
+    : Number(
+        (inventoryValue / totalProducts).toFixed(2),
+      );
+
+const highestValueProduct =
+  inventory.length === 0
+    ? null
+    : inventory.reduce((highest, current) =>
+
+        current.quantity * current.price >
+        highest.quantity * highest.price
+
+          ? current
+
+          : highest
+
+      );
+
+const averagePrice =
+  totalProducts === 0
+    ? 0
+    : Number((inventoryValue / totalProducts).toFixed(2));
   return {
 
     success: true,
 
-    data: {
+   data: {
 
-      totalProducts,
+  totalProducts,
 
-      totalStock,
+  totalStock,
 
-      inventoryValue,
+  inventoryValue,
 
-      lowStockItems: lowStock,
+  averageStock,
 
-      outOfStockItems: outOfStock,
+  averageItemCost,
 
-    },
+  highestValueProduct,
+
+  lowStockItems: lowStock,
+
+  outOfStockItems: outOfStock,
+
+},
 
   };
 
@@ -843,7 +1030,7 @@ async getInventorySummary(
 
 async getLowStockItems(
   tenantId: string,
-) {
+  ) {
 
   const items =
     await this.prisma.inventory.findMany({
@@ -882,7 +1069,7 @@ async getLowStockItems(
 
 async getOutOfStockItems(
   tenantId: string,
-) {
+  ) {
 
   const items =
     await this.prisma.inventory.findMany({
@@ -915,7 +1102,7 @@ async getOutOfStockItems(
 
 async getInventoryValuation(
   tenantId: string,
-) {
+  ) {
 
   const items =
     await this.prisma.inventory.findMany({
@@ -977,7 +1164,7 @@ async getInventoryValuation(
 
 async getCategoryAnalytics(
   tenantId: string,
-) {
+  ) {
 
   const items =
     await this.prisma.inventory.findMany({
@@ -1051,7 +1238,7 @@ async getCategoryAnalytics(
 
 async getMonthlyInventoryAnalytics(
   tenantId: string,
-) {
+  ) {
 
   const items =
     await this.prisma.inventory.findMany({
@@ -1107,4 +1294,58 @@ async getMonthlyInventoryAnalytics(
 
 }
 
+
+async getInventoryHealth(
+  tenantId: string,
+  ) {
+
+  const items =
+    await this.prisma.inventory.findMany({
+      where: { tenantId },
+    });
+
+  const total = items.length;
+
+  const low =
+    items.filter(i => i.quantity <= 5).length;
+
+  const out =
+    items.filter(i => i.quantity === 0).length;
+
+  const healthy =
+    total - low;
+
+  const score =
+    total === 0
+      ? 100
+      : Math.round((healthy / total) * 100);
+
+  return {
+
+    success: true,
+
+    data: {
+
+      score,
+
+      total,
+
+      low,
+
+      out,
+
+      status:
+        score >= 90
+          ? "Excellent"
+          : score >= 70
+          ? "Good"
+          : score >= 50
+          ? "Warning"
+          : "Critical",
+
+    },
+
+  };
+
+}
 }

@@ -153,7 +153,47 @@ export default function FinanceQuickActions({
 
           </div>
 
-          <div className="grid xl:grid-cols-[1.3fr_1fr_auto] gap-5"></div>
+          <div className="grid xl:grid-cols-[1.5fr_1fr_auto] gap-5">
+
+            <div className="relative">
+
+              <CircleDollarSign
+                size={22}
+                className="absolute left-5 top-1/2 -translate-y-1/2 text-emerald-600"
+              />
+
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="Enter Amount"
+                className="w-full rounded-2xl border border-slate-200 bg-white py-4 pl-14 pr-4 text-lg font-semibold outline-none focus:ring-2 focus:ring-emerald-300"
+              />
+
+            </div>
+
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              className="rounded-2xl border border-slate-200 bg-white px-5 py-4 font-semibold outline-none focus:ring-2 focus:ring-emerald-300"
+            >
+              <option value="INCOME">
+                Revenue
+              </option>
+
+              <option value="EXPENSE">
+                Expense
+              </option>
+            </select>
+
+            <button
+              onClick={createTransaction}
+              className="rounded-2xl bg-gradient-to-r from-emerald-600 to-green-500 px-8 py-4 text-white font-bold shadow-lg hover:scale-105 transition-all"
+            >
+              Add Transaction
+            </button>
+
+          </div>
 
         </div>
 

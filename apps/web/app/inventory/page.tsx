@@ -61,6 +61,25 @@ export default function InventoryPage() {
 
   const [loading, setLoading] =
     useState(true);
+  const [summary, setSummary] =
+    useState<any>(null);
+
+  const [health, setHealth] =
+    useState<any>(null);
+
+  const [valuation, setValuation] =
+    useState<any>(null);
+
+  const [categoryAnalytics,
+    setCategoryAnalytics] =
+    useState<any[]>([]);
+
+  const [monthlyAnalytics,
+    setMonthlyAnalytics] =
+    useState<any[]>([]);
+
+  const [vendors, setVendors] =
+    useState<any[]>([]);
 
   // PURCHASE ORDER STATES
   const [vendorName,
@@ -99,12 +118,14 @@ export default function InventoryPage() {
       try {
 
         const res = await api.get(
-  `/inventory?search=${search}`
-);
+          `/inventory?search=${search}`
+        );
 
-setItems(
-  res.data.data.data || []
-);
+        console.log(res.data);
+
+        setItems(
+          res.data.data || []
+        );
 
       } catch (err: any) {
 
@@ -118,6 +139,92 @@ setItems(
       }
     };
 
+
+  const fetchSummary =
+    async () => {
+
+      const res =
+        await api.get(
+          "/inventory/summary"
+        );
+
+      setSummary(
+        res.data.data
+      );
+
+    };
+
+  const fetchHealth =
+    async () => {
+
+      const res =
+        await api.get(
+          "/inventory/health"
+        );
+
+      setHealth(
+        res.data.data
+      );
+
+    };
+
+  const fetchValuation =
+    async () => {
+
+      const res =
+        await api.get(
+          "/inventory/valuation"
+        );
+
+      setValuation(
+        res.data.data
+      );
+
+    };
+
+  const fetchCategoryAnalytics =
+    async () => {
+
+      const res =
+        await api.get(
+          "/inventory/category-analytics"
+        );
+
+      setCategoryAnalytics(
+        res.data.data
+      );
+
+    };
+
+  const fetchMonthlyAnalytics =
+    async () => {
+
+      const res =
+        await api.get(
+          "/inventory/monthly-analytics"
+        );
+
+      setMonthlyAnalytics(
+        res.data.data
+      );
+
+    };
+
+
+  const fetchVendors = async () => {
+    try {
+      const res = await api.get("/vendors");
+
+      console.log("VENDORS RESPONSE:", res.data);
+
+      setVendors(res.data.data || []);
+
+    } catch (err) {
+      console.log(err);
+      toast.error("Failed to load vendors");
+    }
+  };
+
   // FETCH PURCHASE ORDERS
   const fetchPurchaseOrders =
     async () => {
@@ -129,9 +236,9 @@ setItems(
             "/inventory/purchase-orders"
           );
 
-   setPurchaseOrders(
-  res.data.data.data || []
-);
+        setPurchaseOrders(
+          res.data.data || []
+        );
       } catch (err: any) {
 
         console.error(err);
@@ -155,9 +262,9 @@ setItems(
             "/inventory/stock-movements"
           );
 
-    setStockMovements(
-  res.data.data.data || []
-);
+        setStockMovements(
+          res.data.data || []
+        );
 
       } catch (err: any) {
 
@@ -183,7 +290,19 @@ setItems(
       setLoading(true);
 
       const requests = [
+
         fetchInventory(),
+
+        fetchSummary(),
+
+        fetchHealth(),
+
+        fetchValuation(),
+        fetchVendors(),
+        fetchCategoryAnalytics(),
+
+        fetchMonthlyAnalytics(),
+
       ];
 
       if (
@@ -254,7 +373,21 @@ setItems(
         setPrice("");
         setCategory("");
 
-        fetchInventory();
+        await Promise.all([
+
+          fetchInventory(),
+
+          fetchSummary(),
+
+          fetchHealth(),
+
+          fetchValuation(),
+
+          fetchCategoryAnalytics(),
+
+          fetchMonthlyAnalytics(),
+
+        ]);
 
         toast.success(
           "Inventory SKU Created ✅"
@@ -295,7 +428,21 @@ setItems(
         setPrice("");
         setCategory("");
 
-        fetchInventory();
+        await Promise.all([
+
+          fetchInventory(),
+
+          fetchSummary(),
+
+          fetchHealth(),
+
+          fetchValuation(),
+
+          fetchCategoryAnalytics(),
+
+          fetchMonthlyAnalytics(),
+
+        ]);
 
         toast.success(
           "Inventory Updated ✅"
@@ -319,7 +466,21 @@ setItems(
           `/inventory/${id}`
         );
 
-        fetchInventory();
+        await Promise.all([
+
+          fetchInventory(),
+
+          fetchSummary(),
+
+          fetchHealth(),
+
+          fetchValuation(),
+
+          fetchCategoryAnalytics(),
+
+          fetchMonthlyAnalytics(),
+
+        ]);
 
         toast.success(
           "Product Deleted ✅"
@@ -378,7 +539,11 @@ setItems(
 
         setPoPrice("");
 
-        fetchPurchaseOrders();
+        await Promise.all([
+          fetchPurchaseOrders(),
+          fetchSummary(),
+          fetchHealth(),
+        ]);
 
         toast.success(
           "Purchase Order Created ✅"
@@ -402,11 +567,25 @@ setItems(
           `/inventory/purchase-orders/${id}/complete`
         );
 
-        fetchPurchaseOrders();
+        await Promise.all([
 
-        fetchInventory();
+          fetchPurchaseOrders(),
 
-        fetchStockMovements();
+          fetchInventory(),
+
+          fetchStockMovements(),
+
+          fetchSummary(),
+
+          fetchHealth(),
+
+          fetchValuation(),
+
+          fetchCategoryAnalytics(),
+
+          fetchMonthlyAnalytics(),
+
+        ]);
 
         toast.success(
           "Inventory Stock Updated ✅"
@@ -855,16 +1034,32 @@ setItems(
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
 
-                  <input
-                    placeholder="Vendor Name"
-                    className="border border-gray-300 p-3 rounded-2xl"
+                  <select
+                    className="border border-gray-300 p-3 rounded-2xl bg-white"
                     value={vendorName}
                     onChange={(e) =>
-                      setVendorName(
-                        e.target.value
-                      )
+                      setVendorName(e.target.value)
                     }
-                  />
+                  >
+
+                    <option value="">
+                      Select Vendor
+                    </option>
+
+                    {vendors.map((vendor: any) => (
+
+                      <option
+                        key={vendor.id}
+                        value={vendor.name}
+                      >
+                        {vendor.name}
+                        {" • "}
+                        {vendor.company}
+                      </option>
+
+                    ))}
+
+                  </select>
 
                   <select
                     className="border border-gray-300 p-3 rounded-2xl bg-white"

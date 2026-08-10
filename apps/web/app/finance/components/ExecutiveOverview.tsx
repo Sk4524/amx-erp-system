@@ -1,5 +1,6 @@
 "use client";
 
+import { formatCurrency } from "@/lib/formatCurrency";
 import {
   Wallet,
   FileText,
@@ -69,8 +70,8 @@ export default function ExecutiveOverview({
 
             <p className="text-slate-300 mt-5 text-lg leading-8">
 
-              Monitor overall business profitability, cash position,
-              liabilities and receivables from one executive financial overview.
+              Real-time financial health, profitability,
+              cash position and operational insights.
 
             </p>
 
@@ -131,7 +132,7 @@ export default function ExecutiveOverview({
 
             </p>
 
-            <div className="mt-8 grid grid-cols-2 gap-3">
+            <div className="mt-8 grid grid grid-cols-1 md:grid-cols-2 gap-6 gap-3">
 
               <div className="rounded-2xl bg-emerald-500/10 border border-emerald-400/20 p-4">
 
@@ -173,7 +174,7 @@ export default function ExecutiveOverview({
 
         {/* Stats */}
 
-        <div className="grid grid-cols-2 gap-6 mt-10">
+        <div className="grid grid grid-cols-1 md:grid-cols-2 gap-6 gap-6 mt-6">
 
           <div className="group relative overflow-hidden rounded-[30px] border border-cyan-400/15 bg-gradient-to-br from-cyan-500/10 via-white/5 to-blue-500/10 p-7 backdrop-blur-2xl transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_45px_rgba(56,189,248,.18)]">
             <div className="relative w-16 h-16 rounded-3xl bg-gradient-to-br from-cyan-500 via-blue-500 to-indigo-500 flex items-center justify-center shadow-[0_15px_35px_rgba(59,130,246,.35)] group-hover:scale-110 transition-all duration-500">
@@ -189,7 +190,7 @@ export default function ExecutiveOverview({
 
             <h3 className="mt-3 text-4xl font-black">
 
-              ₹{profit.toLocaleString()}
+              ₹{formatCurrency(profit)}
 
             </h3>
 
@@ -220,7 +221,7 @@ export default function ExecutiveOverview({
         </div>
         {/* Executive Insight */}
 
-        <div className="mt-10 rounded-[30px] border border-white/10 bg-white/5 backdrop-blur-2xl p-7">
+        <div className="mt-6 rounded-[30px] border border-white/10 bg-white/5 backdrop-blur-2xl p-7">
 
           <div className="flex flex-col xl:flex-row justify-between gap-8">
 
@@ -252,7 +253,7 @@ export default function ExecutiveOverview({
 
               <div className="rounded-full bg-emerald-500/10 border border-emerald-400/20 px-5 py-2">
 
-                Profit ₹{profit.toLocaleString()}
+                Profit {formatCurrency(profit)}
 
               </div>
 

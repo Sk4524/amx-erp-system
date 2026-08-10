@@ -14,7 +14,7 @@ import {
   Cell,
   Legend,
 } from "recharts";
-
+import { formatCurrency } from "@/lib/formatCurrency";
 import {
   TrendingUp,
   TrendingDown,
@@ -136,8 +136,8 @@ export default function FinanceCharts({
                 Total Income
               </p>
 
-              <h2 className="mt-4 text-4xl font-black">
-                ₹{totalMonthlyIncome.toLocaleString()}
+              <h2 className="mt-4 text-4xl text-[30px] font-black">
+                {formatCurrency(totalMonthlyIncome)}
               </h2>
 
             </div>
@@ -162,8 +162,8 @@ export default function FinanceCharts({
                 Total Expense
               </p>
 
-              <h2 className="mt-4 text-4xl font-black">
-                ₹{totalMonthlyExpense.toLocaleString()}
+              <h2 className="mt-4 text-4xl text-[30px] font-black">
+                {formatCurrency(totalMonthlyExpense)}
               </h2>
 
             </div>
@@ -193,7 +193,7 @@ export default function FinanceCharts({
               </h2>
 
               <p className="mt-2 text-cyan-100">
-                ₹{bestMonth.income.toLocaleString()}
+                {formatCurrency(bestMonth.income)}
               </p>
 
             </div>
@@ -223,10 +223,10 @@ export default function FinanceCharts({
               </h2>
 
               <p className="mt-2 text-violet-100">
-                ₹{(
+                {formatCurrency(
                   bestProfitMonth.income -
                   bestProfitMonth.expense
-                ).toLocaleString()}
+                )}
               </p>
 
             </div>
@@ -250,7 +250,7 @@ export default function FinanceCharts({
             duration: 0.25,
           },
         }}
-        className="relative overflow-hidden rounded-[36px] border border-emerald-100 bg-gradient-to-br from-white  via-emerald-50/40 to-cyan-50/40 shadow-[0_20px_60px_rgba(16,185,129,.08)]"
+        className="group relative overflow-hidden rounded-[34px] border border-white/60 bg-white/80 backdrop-blur-2xl shadow-[0_10px_35px_rgba(0,0,0,.06)] hover:shadow-[0_20px_50px_rgba(0,0,0,.10)] transition-all duration-300"
       >
         {/* TOP BORDER */}
 
@@ -270,12 +270,14 @@ export default function FinanceCharts({
 
             </p>
 
-            <h2 className="mt-2 text-[34px] leading-tight font-black text-slate-900">
+            <h2 className="mt-2 text-3xl xl:text-[34px] leading-tight font-black text-slate-900">
 
               Revenue vs Expenses
 
             </h2>
-
+            <div className="mt-3 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+              Live Analytics
+            </div>
             <p className="mt-3 text-slate-500 leading-7">
 
               Monthly financial comparison overview.
@@ -286,7 +288,7 @@ export default function FinanceCharts({
 
           <ResponsiveContainer
             width="100%"
-            height={340}
+            height={380}
           >
 
             <BarChart data={financeData}>
@@ -362,12 +364,14 @@ export default function FinanceCharts({
 
             </p>
 
-            <h2 className="mt-2 text-[34px] leading-tight font-black text-slate-900">
+            <h2 className="mt-2 text-3xl xl:text-[34px] leading-tight font-black text-slate-900">
 
               Payables vs Receivables
 
             </h2>
-
+            <div className="mt-3 inline-flex rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
+              Outstanding Balance
+            </div>
             <p className="mt-3 text-slate-500 leading-7">
 
               Outstanding liabilities and collections.
@@ -379,7 +383,7 @@ export default function FinanceCharts({
 
           <ResponsiveContainer
             width="100%"
-            height={320}
+            height={360}
           >
 
             <PieChart>
@@ -443,15 +447,17 @@ export default function FinanceCharts({
               MONTHLY TREND
             </p>
 
-            <h2 className="mt-2 text-[34px] leading-tight font-black text-slate-900">
+            <h2 className="mt-2 text-3xl xl:text-[34px] leading-tight font-black text-slate-900">
               Income vs Expense
             </h2>
-
+            <div className="mt-3 inline-flex rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-700">
+              12 Month Trend
+            </div>
           </div>
 
           <ResponsiveContainer
             width="100%"
-            height={340}
+            height={380}
           >
             <AreaChart data={monthlyAnalytics}>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import CountUp from "react-countup";
+import { formatCurrency } from "@/lib/formatCurrency";
 import {
   TrendingUp,
   Wallet,
@@ -17,7 +17,6 @@ interface Props {
 
   cashBalance: number;
 
-  accounts: number;
   payables: number;
   receivables: number;
 }
@@ -27,74 +26,111 @@ export default function FinanceKPIs({
   expense,
   profit,
   cashBalance,
-  accounts,
   payables,
   receivables,
 }: Props) {
 
   const cards = [
-
+    {
+      title: "Revenue",
+      value: income,
+      subtitle: "Total Income",
+      badge: "Income",
+      icon: TrendingUp,
+      color: "emerald",
+    },
     {
       title: "Net Profit",
       value: profit,
-      prefix: "₹",
       subtitle: "Business Profit",
       badge: profit >= 0 ? "Healthy" : "Loss",
       icon: TrendingUp,
-      gradient:
-        "from-emerald-500 to-green-500",
+      color: "blue",
     },
     {
       title: "Cash Balance",
       value: cashBalance,
-      prefix: "₹",
       subtitle: "Available Cash",
       badge: "Live",
       icon: Landmark,
-      gradient: "from-cyan-500 to-blue-500",
+      color: "cyan",
     },
     {
       title: "Expenses",
       value: expense,
-      prefix: "₹",
       subtitle: "Operational Cost",
       badge: expense > income ? "High" : "Normal",
       icon: Wallet,
-      gradient:
-        "from-red-500 to-orange-500",
+      color: "red",
     },
-
     {
       title: "Payables",
       value: payables,
       subtitle: "Outstanding Bills",
       badge: payables === 0 ? "Clear" : "Pending",
       icon: FileText,
-      gradient:
-        "from-amber-500 to-orange-500",
+      color: "amber",
     },
-
     {
       title: "Receivables",
       value: receivables,
       subtitle: "Expected Collection",
       badge: receivables === 0 ? "Collected" : "Pending",
       icon: CreditCard,
-      gradient:
-        "from-blue-500 to-indigo-500",
+      color: "indigo",
     },
-
-    {
-      title: "Accounts",
-      value: accounts,
-      subtitle: "Finance Accounts",
-      badge: "Ledger",
-      icon: Wallet,
-      gradient:
-        "from-violet-500 to-purple-500",
-    },
-
   ];
+
+  const colors = {
+    emerald: {
+      border: "from-emerald-500 to-green-400",
+      glow: "bg-emerald-400/30",
+      icon: "bg-emerald-500 text-white",
+      badge: "bg-emerald-100 text-emerald-700",
+      line: "from-emerald-500 to-green-400",
+    },
+
+    blue: {
+      border: "from-blue-500 to-indigo-500",
+      glow: "bg-blue-400/30",
+      icon: "bg-blue-500 text-white",
+      badge: "bg-blue-100 text-blue-700",
+      line: "from-blue-500 to-indigo-500",
+    },
+
+    cyan: {
+      border: "from-cyan-500 to-sky-500",
+      glow: "bg-cyan-400/30",
+      icon: "bg-cyan-500 text-white",
+      badge: "bg-cyan-100 text-cyan-700",
+      line: "from-cyan-500 to-sky-500",
+    },
+
+    red: {
+      border: "from-red-500 to-orange-500",
+      glow: "bg-red-400/30",
+      icon: "bg-red-500 text-white",
+      badge: "bg-red-100 text-red-700",
+      line: "from-red-500 to-orange-500",
+    },
+
+    amber: {
+      border: "from-amber-500 to-orange-500",
+      glow: "bg-amber-400/30",
+      icon: "bg-amber-500 text-white",
+      badge: "bg-amber-100 text-amber-700",
+      line: "from-amber-500 to-orange-500",
+    },
+
+    indigo: {
+      border: "from-indigo-500 to-violet-500",
+      glow: "bg-indigo-400/30",
+      icon: "bg-indigo-500 text-white",
+      badge: "bg-indigo-100 text-indigo-700",
+      line: "from-indigo-500 to-violet-500",
+    },
+  };
+
   return (
 
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6 gap-5 mb-10">
@@ -102,36 +138,34 @@ export default function FinanceKPIs({
       {cards.map((card, index) => {
 
         const Icon = card.icon;
+        const theme =
+          colors[card.color as keyof typeof colors];
 
         return (
 
           <motion.div
             key={card.title}
-            initial={{
-              opacity: 0,
-              y: 20,
-            }}
-            animate={{
-              opacity: 1,
-              y: 0,
-            }}
-            transition={{
-              delay: index * 0.08,
-            }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.08 }}
             whileHover={{
-              y: -5,
-              scale: 1.015,
+              y: -8,
+              scale: 1.02,
             }}
-            className={`group relative overflow-hidden rounded-[24px] bg-gradient-to-br ${card.gradient} p-[1px] shadow-lg hover:shadow-2xl transition-all duration-500`}
+            className="group relative overflow-hidden rounded-[30px] bg-gradient-to-br from-white to-slate-50 border border-white/70 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,.06)] hover:shadow-[0_18px_55px_rgba(0,0,0,.12)] transition-all duration-500"
           >
-
             {/* INNER CARD */}
 
-            <div className="relative rounded-[23px] bg-white/10 backdrop-blur-2xl px-5 py-5 overflow-hidden h-full">
+            <div className="relative h-[190px] p-6 flex flex-col justify-between">
+              <div
+                className={`absolute top-0 left-0 h-1 w-full bg-gradient-to-r ${theme.border}`}
+              />
+
+              <div
+                className={`absolute -right-12 -top-12 h-40 w-40 rounded-full blur-3xl ${theme.glow}`}
+              />
 
               {/* GLOW */}
-
-              <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/20 rounded-full blur-3xl"></div>
 
               <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-white/10 to-transparent"></div>
 
@@ -141,44 +175,48 @@ export default function FinanceKPIs({
 
                 <div>
 
-                  <p className="text-white text-sm font-semibold tracking-wide">
+                 <p className="uppercase tracking-[0.18em] text-xs font-bold text-slate-500">
 
                     {card.title}
 
                   </p>
 
-                  <h2 className="mt-3 text-[28px] xl:text-[32px] font-black text-white leading-none">
-
-                    {card.prefix}
-
-                    <CountUp
-                      end={card.value}
-                      duration={1.8}
-                      separator=","
-                    />
-
+                  <h2
+                    className="
+                      mt-4
+                      text-[28px]
+                      xl:text-[36px]
+                      font-black
+                      tracking-tight
+                      text-slate-900
+                      leading-none
+                      truncate
+                    "
+                  >
+                    {typeof card.value === "number" &&
+                      card.title !== "Payables" &&
+                      card.title !== "Receivables"
+                      ? formatCurrency(card.value)
+                      : card.value}
                   </h2>
 
                 </div>
 
-                <div className="bg-white/15 backdrop-blur-xl border border-white/20 rounded-3xl p-3 group-hover:scale-110 transition-all duration-500">
-
-                  <Icon
-                    size={22}
-                    className="text-white"
-                  />
-
+                <div
+                  className={`${theme.icon} rounded-3xl rounded-[20px] p-5 shadow-xl group-hover:rotate-6 group-hover:scale-110 transition-all duration-500`}
+                >
+                  <Icon size={28} />
                 </div>
 
               </div>
 
               {/* BOTTOM */}
 
-              <div className="relative z-10 5 flex items-center justify-between">
+              <div className="relative z-10  flex items-center justify-between">
 
                 <div>
 
-                  <p className="text-sm text-white/90">
+                  <p className="text-sm text-slate-500 font-semibold mt-4">
 
                     {card.subtitle}
 
@@ -186,14 +224,16 @@ export default function FinanceKPIs({
 
                 </div>
 
-                <div className="bg-white/15 border border-white/20 backdrop-blur-xl px-3 py-1.5 rounded-full text-xs font-semibold text-white">
-
+                <div
+                  className={`${theme.badge} rounded-full px-3 py-1 text-xs font-bold`}
+                >
                   {card.badge}
-
                 </div>
 
               </div>
-
+              <div
+                className={`absolute bottom-0 left-0 h-1 w-0 bg-gradient-to-r ${theme.line} group-hover:w-full transition-all duration-700`}
+              />
             </div>
 
           </motion.div>

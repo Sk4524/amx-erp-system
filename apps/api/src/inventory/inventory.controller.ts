@@ -21,8 +21,8 @@ import { Roles } from "../auth/roles.decorator";
 
 import {
   ApiBearerAuth,
-ApiTags,
-ApiOperation,
+  ApiTags,
+  ApiOperation,
 } from "@nestjs/swagger";
 
 import { CreateInventoryDto } from "./dto/create-inventory.dto";
@@ -339,6 +339,20 @@ getStockMovements(
 @ApiOperation({
   summary: "Get inventory item by id",
 })
+
+@Get("health")
+@Roles(
+  "ADMIN",
+  "MANAGER",
+  "FINANCE",
+)
+getInventoryHealth(
+  @Req() req: any,
+) {
+  return this.service.getInventoryHealth(
+    req.user.tenantId,
+  );
+}
 @Get(":id")
 @Roles(
   "ADMIN",
@@ -357,4 +371,5 @@ getOne(
   );
 
 }
+
 }

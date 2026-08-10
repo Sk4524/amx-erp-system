@@ -67,9 +67,6 @@ getTransactions(
     @Query("type")
     type?: string,
 
-    @Query("accountId")
-    accountId?: string,
-
     @Query("minAmount")
     minAmount?: string,
 
@@ -85,15 +82,14 @@ getTransactions(
   req.user.tenantId,
 
   {
-    search: search || "",
-    fromDate,
-    toDate,
-    type,
-    accountId,
-    minAmount,
-    maxAmount,
-    sortBy,
-  },
+  search: search || "",
+  fromDate,
+  toDate,
+  type,
+  minAmount,
+  maxAmount,
+  sortBy,
+}
 
 );
 }
